@@ -1,12 +1,3 @@
 # compass
-JavaScript mapping classes and random generation algorithms
 
-## Setup
-Getting started is as easy as `npm i @ion-cloud/compass --save` and then `importing` the required modules into your app with `import {Map,Sector,maps} from '@ion-cloud/compass'`. 
-
-Please see code example [here](https://github.com/ion-cloud/compass/blob/master/demo/src/index.js).
-
-## Usage
-```
-// under construction
-```
+[![Build Status](https://travis-ci.org/NathanielInman/compass.svg?branch=master)](https://travis-ci.org/NathanielInman/compass) [![dependency Status](https://david-dm.org/NathanielInman/compass/status.svg?style=flat)](https://david-dm.org/NathanielInman/compass) [![devDependency Status](https://david-dm.org/NathanielInman/compass/dev-status.svg?style=flat)](https://david-dm.org/NathanielInman/compass#info=devDependencies)
