@@ -1,0 +1,36 @@
+{
+  "name": "@ion-cloud/compass",
+  "version": "1.0.0",
+  "description": "JavaScript mapping classes and random generation algorithms",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ion-cloud/compass.git"
+  },
+  "keywords": [
+    "javascript",
+    "ion-cloud",
+    "game-dev",
+    "random",
+    "mapping",
+    "procedural",
+    "generation"
+  ],
+  "author": "NathanielInman",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/ion-cloud/compass/issues"
+  },
+  "homepage": "https://github.com/ion-cloud/compass#readme",
+  "devDependencies": {
+    "babel-core": "^6.26.3",
+    "babel-preset-env": "^1.7.0"
+  },
+  "dependencies": {
+    "collections": "^5.1.9",
+    "noisejs": "^2.1.0"
+  }
+}

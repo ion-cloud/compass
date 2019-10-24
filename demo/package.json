@@ -1,6 +1,29 @@
 {
+  "name": "demo",
+  "version": "0.1.0",
+  "description": "JavaScript mapping classes and random generation algorithms",
+  "main": "config.babel.js",
+  "author": {
+    "name": "NathanielInman",
+    "email": "nate@theoestudio.com"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/NathanielInman/demo.git"
+  },
+  "bugs": {
+    "url": "https://github.com/NathanielInman/demo/issues"
+  },
+  "scripts": {
+    "prestart": "rm -rf ./parcel",
+    "start": "NODE_ENV=development ./node_modules/parcel/bin/cli.js ./src/index.pug -d dist --cache-dir .parcel"
+  },
   "devDependencies": {
-    "babel-core": "^6.26.3",
-    "babel-preset-env": "^1.7.0"
-  }
+    "parcel": "^1.12.4"
+  },
+  "dependencies": {
+    "@ion-cloud/core": "^2.0.0"
+  },
+  "readmeFilename": "README.md",
+  "homepage": "https://github.com/NathanielInman/demo"
 }
