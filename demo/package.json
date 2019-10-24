@@ -19,7 +19,11 @@
     "start": "NODE_ENV=development ./node_modules/parcel/bin/cli.js ./src/index.pug -d dist --cache-dir .parcel"
   },
   "devDependencies": {
-    "parcel": "^1.12.4"
+    "babel-core": "^6.26.3",
+    "babel-preset-env": "^1.7.0",
+    "parcel": "^1.12.4",
+    "pug": "^2.0.4",
+    "stylus": "^0.54.7"
   },
   "dependencies": {
     "@ion-cloud/core": "^2.0.0"

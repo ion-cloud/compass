@@ -20,12 +20,13 @@ if(!easel.activated){
   const map = new Map(50,50),
         arroyo = maps.find(map=> map.name==='arroyo');
 
-  for(let y=0;y<this.height;y++){
+  for(let y=0;y<map.height;y++){
     map.sectors[y]=[];
-    for(let x=0;x<this.width;x++){
+    for(let x=0;x<map.width;x++){
       map.sectors[y][x]=new Sector({x,y,map});
     } //end for
   } //end for
+  arroyo.generator({map});
   easel.onDraw = function(){
     const rh = easel.viewport.h/map.height, rw = easel.viewport.w/map.width;
 
