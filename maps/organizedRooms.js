@@ -1,5 +1,3 @@
-import Set from 'collections/set';
-
 const [WEST,EAST,NORTH,SOUTH] = [0,1,2,3],
       ROOMSIZE = 5; //can't be lower than 3, includes wall
 
@@ -154,12 +152,11 @@ export function organizedRooms({map}){
   function allocateRooms(){
     const minWidth=3,minHeight=3;
 
-    let freeX,freeY,intersectY;
-
     map.sectors.forEach((row,y)=>{
       row.forEach((sector,x)=>{
         if(sector.isEmpty()){
-          freeX=new Set();
+          const freeX=new Set();
+
           for(let i=x,sx=x;i>0&&i<map.width-2&&i-sx<=ROOMSIZE;i++){
             if(map.isEmpty({x: i,y})){
               freeX.add(i);
@@ -167,10 +164,11 @@ export function organizedRooms({map}){
               break;
             } //end if
           } //end for
-          if(freeX.length>=minWidth){
-            freeY=new Set();
-            intersectY=new Set();
-            freeX.toArray().some((fx,fxIndex)=>{
+          if(freeX.size>=minWidth){
+            const freeY = new Set(),
+                  intersectY=new Set();
+
+            [...freeX].some((fx,fxIndex)=>{
               intersectY.clear();
               for(let i=y,sy=y;i>0&&i<map.height-2&&i-sy<=ROOMSIZE;i++){
                 if(map.isEmpty({x: fx,y: i})){
@@ -181,12 +179,19 @@ export function organizedRooms({map}){
                 } //end if
               } //end for
               if(fxIndex>0){
-                freeY = freeY.intersection(intersectY);
+                freeY = new Set([...freeY].filter(o=>intersectY.has(o)));
                 if(freeY.length===0) return true;
               } //end if
               return false;
             });
-            if(freeY.length>=minHeight) fillRoom(freeX.min(),freeY.min(),freeX.max(),freeY.max());
+            if(freeY.length>=minHeight){
+              fillRoom(
+                Math.min(...freeX),
+                Math.min(...freeY),
+                Math.max(...freeX),
+                Math.max(...freeY)
+              );
+            } //end if
           } //end if
         } //end if
       });
