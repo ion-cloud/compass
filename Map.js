@@ -1,5 +1,5 @@
-import Heap from 'collections/heap';
 import {Noise} from 'noisejs';
+import {Heap} from './Heap';
 
 export class Map{
   constructor({
@@ -594,3 +594,4 @@ export class Map{
     });
   }
 }
+

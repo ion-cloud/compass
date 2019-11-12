@@ -30,7 +30,6 @@
     "babel-preset-env": "^1.7.0"
   },
   "dependencies": {
-    "collections": "^5.1.9",
     "noisejs": "^2.1.0"
   }
 }
