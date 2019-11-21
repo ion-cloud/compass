@@ -7,7 +7,9 @@ export class Heap{
     this.values = [];
     this.compare = compare;
     values.forEach(o=> this.push(o));
-    console.log(this.values)
+  }
+  get length(){
+    return this.values.length;
   }
   push(value){
     this.values.push(value);
