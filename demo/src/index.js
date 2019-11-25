@@ -18,7 +18,7 @@ if(!easel.activated){
 }else{
   noscript.style.display='none';
   const map = new Map(50,50),
-        arroyo = maps.find(map=> map.name==='arroyo');
+        arroyo = maps.find(map=> map.name==='organized rooms');
 
   for(let y=0;y<map.height;y++){
     map.sectors[y]=[];

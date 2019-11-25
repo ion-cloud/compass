@@ -155,7 +155,7 @@ export function organizedRooms({map}){
     map.sectors.forEach((row,y)=>{
       row.forEach((sector,x)=>{
         if(sector.isEmpty()){
-          const freeX=new Set();
+          let freeX=new Set();
 
           for(let i=x,sx=x;i>0&&i<map.width-2&&i-sx<=ROOMSIZE;i++){
             if(map.isEmpty({x: i,y})){
@@ -165,8 +165,8 @@ export function organizedRooms({map}){
             } //end if
           } //end for
           if(freeX.size>=minWidth){
-            const freeY = new Set(),
-                  intersectY=new Set();
+            let freeY = new Set(),
+                intersectY=new Set();
 
             [...freeX].some((fx,fxIndex)=>{
               intersectY.clear();
@@ -180,11 +180,11 @@ export function organizedRooms({map}){
               } //end for
               if(fxIndex>0){
                 freeY = new Set([...freeY].filter(o=>intersectY.has(o)));
-                if(freeY.length===0) return true;
+                if(freeY.size===0) return true;
               } //end if
               return false;
             });
-            if(freeY.length>=minHeight){
+            if(freeY.size>=minHeight){
               fillRoom(
                 Math.min(...freeX),
                 Math.min(...freeY),
