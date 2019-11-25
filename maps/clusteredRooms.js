@@ -95,7 +95,7 @@ export function clusteredRooms({map,retry=5}){
     wallify();
   }else{
     map.reset();
-    clusteredRooms(map,retry-1);
+    clusteredRooms({map,retry:retry-1});
   } //end if
 
   function buildRooms(path){
