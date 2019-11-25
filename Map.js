@@ -306,7 +306,7 @@ export class Map{
   findPath({x1=0,y1=0,x2=0,y2=0,test=()=>true,map=this}={}){
     const weight = 1,
           heuristic = (dx, dy) => dx + dy, //manhattan heuristic
-          openList = new Heap([],(a,b)=>b.path.f-a.path.f<0),
+          openList = new Heap([],(a,b)=>b.path.f-a.path.f>0),
           abs = Math.abs, //shorten reference
           clone = this.clone(), //so we can mutate it and destroy it when done
           SQRT2 = Math.SQRT2; //shorten reference

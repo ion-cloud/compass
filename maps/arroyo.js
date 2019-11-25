@@ -65,7 +65,18 @@ export function arroyo({map}){
   const x2 = x, y2 = y;
 
   // now we'll draw the path between the points
-  map.findPath({x1,y1,x2,y2}).forEach(sector=>{
+  [
+    ...map.findPath({
+      x1,y1,
+      x2:Math.floor(map.width/2),
+      y2:Math.floor(map.height/2)
+    }),
+    ...map.findPath({
+      x1:Math.floor(map.width/2),
+      y1:Math.floor(map.height/2),
+      x2,y2
+    })
+  ].forEach(sector=>{
     const x = sector.x, y = sector.y;
 
     map.setWater({x,y});
