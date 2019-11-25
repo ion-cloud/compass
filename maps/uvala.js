@@ -35,6 +35,7 @@ export function uvala({map}){
   // finally we'll clean up unwalkable sections
   map.clipOrphaned({
     test: sector=> sector.isWalkable(),
-    failure: sector=> sector.setWallSpecial()
+    failure: sector=> sector.setWallSpecial(),
+    hardFailure: sector=> sector.setWall()
   });
 } //end function

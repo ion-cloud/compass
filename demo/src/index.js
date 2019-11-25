@@ -18,7 +18,7 @@ if(!easel.activated){
 }else{
   noscript.style.display='none';
   const map = new Map(50,50),
-        arroyo = maps.find(map=> map.name==='organized rooms');
+        arroyo = maps.find(map=> map.name==='wadi');
 
   for(let y=0;y<map.height;y++){
     map.sectors[y]=[];
@@ -32,7 +32,7 @@ if(!easel.activated){
 
     map.sectors.forEach((row,y)=>{
       row.forEach((sector,x)=>{
-        if(sector.isEmpty()){
+        if(sector.isEmpty()||sector.isVoid()){
           easel.ctx.fillStyle='#000';
         }else if(sector.isRemoved()){
           easel.ctx.fillStyle='#833';
