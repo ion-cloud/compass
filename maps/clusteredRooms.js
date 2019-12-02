@@ -86,7 +86,7 @@ export function clusteredRooms({map,retry=5}){
   // before we quantify a failure, we need to ensure that all walkable
   // floor is accessible
   map.clipOrphaned({
-    test: sector=> sector.isWalkable(),
+    test: sector=> sector.isWalkable()||sector.isDoor(),
     failure: sector=> sector.setEmpty()
   });
 
