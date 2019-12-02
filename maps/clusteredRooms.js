@@ -83,6 +83,13 @@ export function clusteredRooms({map,retry=5}){
     if(path) path.shift(); // remove the starting point
   }while(nodes.length||leafs.length)
 
+  // before we quantify a failure, we need to ensure that all walkable
+  // floor is accessible
+  map.clipOrphaned({
+    test: sector=> sector.isWalkable(),
+    failure: sector=> sector.setEmpty()
+  });
+
   // we require a certain percentage of the screen to be populated
   // with rooms; otherwise we restart the process.
   const requiredRooms = map.width*map.height/Math.pow(maxRoomSize,2)/2;
