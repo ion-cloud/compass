@@ -1,6 +1,3 @@
-import {Noise} from 'noisejs';
-
-//eslint-disable-next-line complexity
 export function alluvialFan({map}){
   const viableStartSectors = [],
         viableEndSectors = [],
@@ -20,7 +17,6 @@ export function alluvialFan({map}){
     // land on the wall that a be a start of the stream and a water area
     // near the middle of the screen it can outlet into
     do{
-      map.noise = new Noise(Math.random());
       viableStartSectors.length = 0;
       viableEndSectors.length = 0;
       map.sectors.forEach(row=>{

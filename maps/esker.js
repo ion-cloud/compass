@@ -1,5 +1,3 @@
-import {Noise} from 'noisejs';
-
 export function esker({map}){
 
   // start by making the eskers themselves
@@ -39,7 +37,6 @@ export function esker({map}){
 
   // now we'll populate some noise obstructions to make it interesting
   // we need to start by reseting the nosie map so it doesn't match
-  map.noise = new Noise(Math.random());
   map.sectors.forEach(row=>{
     row.forEach(sector=>{
       const {x,y} = sector;

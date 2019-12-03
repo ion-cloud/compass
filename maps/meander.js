@@ -1,4 +1,4 @@
-import {Noise} from 'noisejs';
+import {Noise} from '../Noise';
 
 // Meander Calculation:
 //
@@ -133,7 +133,7 @@ export function meander({map}){
   });
 
   // now we'll make the rest of the map look good
-  const noise = new Noise(Math.random());
+  const noise = new Noise();
 
   map.sectors.forEach(row=>{
     row.forEach(sector=>{
