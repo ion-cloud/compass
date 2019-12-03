@@ -346,7 +346,7 @@ export class Map{
         path.push(map.getSector({x: x1,y: y1})); //add start node
 
         // pop from list to get path in order
-        return path;
+        return path.reverse();
       } //end if
 
       // get neighbours of the current node
