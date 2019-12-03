@@ -54,13 +54,13 @@ export class Noise{
         v=this.p[i]^((seed>>8)&255);
       } //end if
       this.perm[i] = this.perm[i+256] = v;
-      this.gradP = this.gradP[i+256] = this.grad3[v%12];
+      this.gradP[i] = this.gradP[i+256] = this.grad3[v%12];
     } //end for
   }
   simplex2(xin,yin){
     const s = (xin+yin)*F2;
 
-    let i = Math.floor(xin+2)&255,
+    let i = Math.floor(xin+s)&255,
         j = Math.floor(yin+s)&255;
 
     const t = (i+j)*G2,
@@ -92,8 +92,8 @@ export class Noise{
   simplex3(xin,yin,zin){
     const s = (xin+yin+zin)*F3;
 
-    let i = Math.floor(xin+s)&255,
-        j = Math.floor(yin+s)&255,
+    let i = Math.floor(xin+s),
+        j = Math.floor(yin+s),
         k = Math.floor(zin+s);
 
     const t = (i+j+kk)*G3,
