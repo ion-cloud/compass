@@ -1,4 +1,4 @@
-import {Noise} from 'noisejs';
+import {Noise} from './Noise';
 import {Heap} from './Heap';
 
 export class Map{
@@ -91,6 +91,12 @@ export class Map{
   }
   setWaterSpecial({x=0,y=0}={}){
     this.getSector({x,y}).setWaterSpecial();
+  }
+  isWindow({x=0,y=0}={}){
+    return this.getSector({x,y}).isWindow();
+  }
+  setWindow({x=0,y=0}={}){
+    return this.getSector({x,y}).setWindow();
   }
   isDoor({x=0,y=0}={}){
     return this.getSector({x,y}).isDoor();
@@ -380,6 +386,195 @@ export class Map{
     return null;
   }
 
+  // Use Mingos Restricted Precise Angle Shadowcasting to
+  // set new visible sectors
+  computeFOV({
+    originX,originY,radius,
+    isTransparent=()=>{},isVisible=()=>{},setVisible=()=>{}
+  }={}){
+    setVisible({x:originX,y:originY});
+
+    // southeast
+    this.computeFOVOctantY({
+      originX,originY,radius,deltaX:1,deltaY:1,
+      isTransparent,isVisible,setVisible
+    });
+    this.computeFOVOctantX({
+      originX,originY,radius,deltaX:1,deltaY:1,
+      isTransparent,isVisible,setVisible
+    });
+
+    // northeast
+    this.computeFOVOctantY({
+      originX,originY,radius,deltaX:1,deltaY:-1,
+      isTransparent,isVisible,setVisible
+    });
+    this.computeFOVOctantX({
+      originX,originY,radius,deltaX:1,deltaY:-1,
+      isTransparent,isVisible,setVisible
+    });
+
+    // southwest
+    this.computeFOVOctantY({
+      originX,originY,radius,deltaX:-1,deltaY:1,
+      isTransparent,isVisible,setVisible
+    });
+    this.computeFOVOctantX({
+      originX,originY,radius,deltaX:-1,deltaY:1,
+      isTransparent,isVisible,setVisible
+    });
+
+    // northwest
+    this.computeFOVOctantY({
+      originX,originY,radius,deltaX:-1,deltaY:-1,
+      isTransparent,isVisible,setVisible
+    });
+    this.computeFOVOctantX({
+      originX,originY,radius,deltaX:-1,deltaY:-1,
+      isTransparent,isVisible,setVisible
+    });
+  }
+  computeFOVOctantY({
+    originX,originY,deltaX,deltaY,radius,
+    isTransparent,isVisible,setVisible
+  }){
+    const minX = Math.max(0,originX-radius),
+          minY = Math.max(0,originY-radius),
+          maxX = Math.min(this.width-1,originX+radius),
+          maxY = Math.min(this.height-1,originY+radius),
+          startSlopes = [],
+          endSlopes = [];
+
+    for(
+      let y=originY+deltaY,
+      iteration=1,totalObstacles=0,obstaclesInLastLine=0,
+      minSlope=0;
+      y>=minY&&y<=maxY;
+      y+=deltaY,obstaclesInLastLine=totalObstacles,++iteration
+    ){
+      const halfSlope = 0.5/iteration;
+
+      for(
+        let processedCell = Math.floor(minSlope*iteration+0.5),
+        x=originX+(processedCell*deltaX),
+        previousEndSlope=-1,
+        visible,extended,centreSlope,endSlope;
+        processedCell<=iteration&&x>=minX&&x<=maxX;
+        x+=deltaX,++processedCell,previousEndSlope=endSlope
+      ){
+        let visible=true,extended=false,
+            centreSlope=processedCell/iteration,
+            startSlope=previousEndSlope;
+
+        endSlope=centreSlope+halfSlope;
+        if(obstaclesInLastLine>0){
+          if(
+            !(isVisible({x,y:y-deltaY})&&isTransparent({x,y:y-deltaY}))&&
+            !(isVisible({x:x-deltaX,y:y-deltaY})&&isTransparent({x:x-deltaX,y:y-deltaY}))
+          ){
+            visible = false;
+          }else{
+            for(let idx=0;idx<obstaclesInLastLine&&visible;++idx){
+              if(startSlope>endSlopes[idx]||endSlope<startSlopes[idx]) continue;
+              if(isTransparent({x,y})){
+                if(centreSlope>startSlopes[idx]&&centreSlope<endSlopes[idx]){
+                  visible=false;
+                  break;
+                } //end if
+              }else if(startSlope>=startSlopes[idx]&&endSlope<=endSlopes[idx]){
+                visible=false;
+                break;
+              }else{
+                startSlopes[idx]=Math.min(startSlopes[idx],startSlope);
+                endSlopes[idx]=Math.max(endSlopes[idx],endSlope);
+                extended=true;
+              } //end if
+            } //end for
+          } //end if
+        } //end if
+        if(visible){
+          setVisible({x,y});
+          if(!isTransparent({x,y})&&minSlope>=startSlope){
+            minSlope = endSlope;
+          }else if(!isTransparent({x,y})&&!extended){
+            startSlopes[totalObstacles] = startSlope;
+            endSlopes[totalObstacles++] = endSlope;
+          } //end if
+        } //end if
+      } //end for
+    } //end for
+  }
+  computeFOVOctantX({
+    originX,originY,deltaX,deltaY,radius,
+    isTransparent,isVisible,setVisible
+  }){
+    const minX = Math.max(0,originX-radius),
+          minY = Math.max(0,originY-radius),
+          maxX = Math.min(this.width-1,originX+radius),
+          maxY = Math.min(this.height-1,originY+radius),
+          startSlopes = [],
+          endSlopes = [];
+
+    for(
+      let x=originX+deltaX,
+      iteration=1,totalObstacles=0,obstaclesInLastLine=0,
+      minSlope=0;
+      x>=minX&&x<=maxX;
+      x+=deltaX,obstaclesInLastLine=totalObstacles,++iteration
+    ){
+      const halfSlope = 0.5/iteration;
+
+      for(
+        let processedCell = Math.floor(minSlope*iteration+0.5),
+        y=originY+(processedCell*deltaY),
+        previousEndSlope=-1,
+        visible,extended,centreSlope,endSlope;
+        processedCell<=iteration&&y>=minY&&y<=maxY;
+        y+=deltaY,++processedCell,previousEndSlope=endSlope
+      ){
+        let visible=true,extended=false,
+            centreSlope=processedCell/iteration,
+            startSlope=previousEndSlope;
+
+        endSlope=centreSlope+halfSlope;
+        if(obstaclesInLastLine>0){
+          if(
+            !(isVisible({x:x-deltaX,y})&&isTransparent({x:x-deltaX,y}))&&
+            !(isVisible({x:x-deltaX,y:y-deltaY})&&isTransparent({x:x-deltaX,y:y-deltaY}))
+          ){
+            visible = false;
+          }else{
+            for(let idx=0;idx<obstaclesInLastLine&&visible;++idx){
+              if(startSlope>endSlopes[idx]||endSlope<startSlopes[idx]) continue;
+              if(isTransparent({x,y})){
+                if(centreSlope>startSlopes[idx]&&centreSlope<endSlopes[idx]){
+                  visible=false;
+                  break;
+                } //end if
+              }else if(startSlope>=startSlopes[idx]&&endSlope<=endSlopes[idx]){
+                visible=false;
+                break;
+              }else{
+                startSlopes[idx]=Math.min(startSlopes[idx],startSlope);
+                endSlopes[idx]=Math.max(endSlopes[idx],endSlope);
+                extended=true;
+              } //end if
+            } //end for
+          } //end if
+        } //end if
+        if(visible){
+          setVisible({x,y});
+          if(!isTransparent({x,y})&&minSlope>=startSlope){
+            minSlope = endSlope;
+          }else if(!isTransparent({x,y})&&!extended){
+            startSlopes[totalObstacles] = startSlope;
+            endSlopes[totalObstacles++] = endSlope;
+          } //end if
+        } //end if
+      } //end for
+    } //end for
+  }
+
   // test that the entire path passes the specified test function and return
   // boolean
   isPath({path=[],test=()=>true}={}){
@@ -594,4 +789,3 @@ export class Map{
     });
   }
 }
-

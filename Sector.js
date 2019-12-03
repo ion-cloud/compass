@@ -36,6 +36,12 @@ export class Sector{
   setRemoved(){
     this.category = 'removed';
   }
+  setWindow(){
+    this.category = 'window';
+  }
+  isWindow(){
+    return this.category === 'window';
+  }
   isDoor(){
     return this.category === 'door';
   }
