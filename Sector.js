@@ -1,6 +1,7 @@
 export class Sector{
-  constructor({map,x=0,y=0,category='empty',roomNumber=0}={}){
+  constructor({map,x=0,y=0,actor=null,category='empty',roomNumber=0}={}){
     this.map = map;
+    this.actor = null;
     this.x = x;
     this.y = y;
     this.category = category;
@@ -12,6 +13,7 @@ export class Sector{
       map: this.map,
       x: this.x,
       y: this.y,
+      actor: this.actor,
       category: this.category,
       roomNumber: this.roomNumber
     });
@@ -118,6 +120,18 @@ export class Sector{
   }
   unsetVisible(){
     this.visible = false;
+  }
+  isOccupied(){
+    return this.actor?true:false;
+  }
+  setOccupied(actor){
+    this.actor = actor;
+  }
+  clearOccupied(){
+    this.actor = null;
+  }
+  getOccupied(){
+    return this.actor;
   }
 }
 
