@@ -79,10 +79,10 @@ export class Map{
     }else if(direction==='northwest'){
       return {x:x-1,y:y-1};
     } //end if
-    return {x,y};
+    return [x,y];
   }
   getSector({x=0,y=0}={},direction){
-    if(direction) {x,y} = this.constructor.translate({x,y,direction});
+    if(direction) [x,y] = this.constructor.translate({x,y,direction});
     return this.sectors[y][x];
   }
 
@@ -91,132 +91,132 @@ export class Map{
   isInbounds({
     x=0,y=0,x1=0,y1=0,x2=this.width-1,y2=this.height-1
   }={},direction){
-    if(direction) {x,y} = this.constructor.translate({x,y,direction});
+    if(direction) [x,y] = this.constructor.translate({x,y,direction});
     return x>=x1&&x<=x2&&y>=y1&&y<=y2&&
       x>=0&&y>=0&&x<=this.width-1&&y<=this.height-1;
   }
   getColors({x=0,y=0}={},direction){
-    if(direction) {x,y} = this.constructor.translate({x,y,direction});
+    if(direction) [x,y] = this.constructor.translate({x,y,direction});
     return this.getSector({x,y}).getColors();
   }
   isEmpty({x=0,y=0}={},direction){
-    if(direction) {x,y} = this.constructor.translate({x,y,direction});
+    if(direction) [x,y] = this.constructor.translate({x,y,direction});
     return this.getSector({x,y}).isEmpty();
   }
   setEmpty({x=0,y=0}={},direction){
-    if(direction) {x,y} = this.constructor.translate({x,y,direction});
+    if(direction) [x,y] = this.constructor.translate({x,y,direction});
     this.getSector({x,y}).setEmpty();
   }
   isVoid({x=0,y=0}={},direction){
-    if(direction) {x,y} = this.constructor.translate({x,y,direction});
+    if(direction) [x,y] = this.constructor.translate({x,y,direction});
     return this.getSector({x,y}).isVoid();
   }
   setVoid({x=0,y=0}={},direction){
-    if(direction) {x,y} = this.constructor.translate({x,y,direction});
+    if(direction) [x,y] = this.constructor.translate({x,y,direction});
     this.getSector({x,y}).setVoid();
   }
   isFloor({x=0,y=0}={},direction){
-    if(direction) {x,y} = this.constructor.translate({x,y,direction});
+    if(direction) [x,y] = this.constructor.translate({x,y,direction});
     return this.getSector({x,y}).isFloor();
   }
   setFloor({x=0,y=0}={},direction){
-    if(direction) {x,y} = this.constructor.translate({x,y,direction});
+    if(direction) [x,y] = this.constructor.translate({x,y,direction});
     this.getSector({x,y}).setFloor();
   }
   isFloorSpecial({x=0,y=0}={},direction){
-    if(direction) {x,y} = this.constructor.translate({x,y,direction});
+    if(direction) [x,y] = this.constructor.translate({x,y,direction});
     return this.getSector({x,y}).isFloorSpecial();
   }
   setFloorSpecial({x=0,y=0}={},direction){
-    if(direction) {x,y} = this.constructor.translate({x,y,direction});
+    if(direction) [x,y] = this.constructor.translate({x,y,direction});
     this.getSector({x,y}).setFloorSpecial();
   }
   isWall({x=0,y=0}={},direction){
-    if(direction) {x,y} = this.constructor.translate({x,y,direction});
+    if(direction) [x,y] = this.constructor.translate({x,y,direction});
     return this.getSector({x,y}).isWall();
   }
   setWall({x=0,y=0}={},direction){
-    if(direction) {x,y} = this.constructor.translate({x,y,direction});
+    if(direction) [x,y] = this.constructor.translate({x,y,direction});
     this.getSector({x,y}).setWall();
   }
   isWallSpecial({x=0,y=0}={},direction){
-    if(direction) {x,y} = this.constructor.translate({x,y,direction});
+    if(direction) [x,y] = this.constructor.translate({x,y,direction});
     return this.getSector({x,y}).isWallSpecial();
   }
   setWallSpecial({x=0,y=0}={},direction){
-    if(direction) {x,y} = this.constructor.translate({x,y,direction});
+    if(direction) [x,y] = this.constructor.translate({x,y,direction});
     this.getSector({x,y}).setWallSpecial();
   }
   isWater({x=0,y=0}={},direction){
-    if(direction) {x,y} = this.constructor.translate({x,y,direction});
+    if(direction) [x,y] = this.constructor.translate({x,y,direction});
     return this.getSector({x,y}).isWater();
   }
   setWater({x=0,y=0}={},direction){
-    if(direction) {x,y} = this.constructor.translate({x,y,direction});
+    if(direction) [x,y] = this.constructor.translate({x,y,direction});
     this.getSector({x,y}).setWater();
   }
   isWaterSpecial({x=0,y=0},direction){
-    if(direction) {x,y} = this.constructor.translate({x,y,direction});
+    if(direction) [x,y] = this.constructor.translate({x,y,direction});
     return this.getSector({x,y}).isWaterSpecial();
   }
   setWaterSpecial({x=0,y=0}={},direction){
-    if(direction) {x,y} = this.constructor.translate({x,y,direction});
+    if(direction) [x,y] = this.constructor.translate({x,y,direction});
     this.getSector({x,y}).setWaterSpecial();
   }
   isWindow({x=0,y=0}={},direction){
-    if(direction) {x,y} = this.constructor.translate({x,y,direction});
+    if(direction) [x,y] = this.constructor.translate({x,y,direction});
     return this.getSector({x,y}).isWindow();
   }
   setWindow({x=0,y=0}={},direction){
-    if(direction) {x,y} = this.constructor.translate({x,y,direction});
+    if(direction) [x,y] = this.constructor.translate({x,y,direction});
     return this.getSector({x,y}).setWindow();
   }
   isDoor({x=0,y=0}={},direction){
-    if(direction) {x,y} = this.constructor.translate({x,y,direction});
+    if(direction) [x,y] = this.constructor.translate({x,y,direction});
     return this.getSector({x,y}).isDoor();
   }
   isDoorClosed({x=0,y=0}={},direction){
-    if(direction) {x,y} = this.constructor.translate({x,y,direction});
+    if(direction) [x,y] = this.constructor.translate({x,y,direction});
     return this.getSector({x,y}).isDoorClosed();
   }
   isDoorOpen({x=0,y=0}={},direction){
-    if(direction) {x,y} = this.constructor.translate({x,y,direction});
+    if(direction) [x,y] = this.constructor.translate({x,y,direction});
     return this.getSector({x,y}).isDoorOpen();
   }
   setDoor({x=0,y=0}={},direction){
-    if(direction) {x,y} = this.constructor.translate({x,y,direction});
+    if(direction) [x,y] = this.constructor.translate({x,y,direction});
     this.getSector({x,y}).setDoor();
   }
   setDoorOpen({x=0,y=0}={},direction){
-    if(direction) {x,y} = this.constructor.translate({x,y,direction});
+    if(direction) [x,y] = this.constructor.translate({x,y,direction});
     this.getSector({x,y}).setDoorOpen();
   }
   setDoorClosed({x=0,y=0}={},direction){
-    if(direction) {x,y} = this.constructor.translate({x,y,direction});
+    if(direction) [x,y] = this.constructor.translate({x,y,direction});
     this.getSector({x,y}).setDoorClosed();
   }
   isRemoved({x=0,y=0}={},direction){
-    if(direction) {x,y} = this.constructor.translate({x,y,direction});
+    if(direction) [x,y] = this.constructor.translate({x,y,direction});
     return this.getSector({x,y}).isRemoved();
   }
   setRemoved({x=0,y=0}={},direction){
-    if(direction) {x,y} = this.constructor.translate({x,y,direction});
+    if(direction) [x,y] = this.constructor.translate({x,y,direction});
     this.getSector({x,y}).setRemoved();
   }
   isWalkable({x=0,y=0}={},direction){
-    if(direction) {x,y} = this.constructor.translate({x,y,direction});
+    if(direction) [x,y] = this.constructor.translate({x,y,direction});
     return this.getSector({x,y}).isWalkable();
   }
   isRoom({x=0,y=0}={},direction){
-    if(direction) {x,y} = this.constructor.translate({x,y,direction});
+    if(direction) [x,y] = this.constructor.translate({x,y,direction});
     return this.getSector({x,y}).id>0;
   }
   setRoom({x=0,y=0,id=0}={},direction){
-    if(direction) {x,y} = this.constructor.translate({x,y,direction});
+    if(direction) [x,y] = this.constructor.translate({x,y,direction});
     this.getSector({x,y}).roomNumber = id;
   }
   getRoom({x=0,y=0}={},direction){
-    if(direction) {x,y} = this.constructor.translate({x,y,direction});
+    if(direction) [x,y] = this.constructor.translate({x,y,direction});
     return this.getSector({x,y}).roomNumber;
   }
   isSameRoom({x1=0,y1=0,x2=0,y2=0}={}){
@@ -224,19 +224,19 @@ export class Map{
       this.getSector({x: x2,y: y2}).roomNumber;
   }
   unsetVisible({x=0,y=0}={},direction){
-    if(direction) {x,y} = this.constructor.translate({x,y,direction});
+    if(direction) [x,y] = this.constructor.translate({x,y,direction});
     this.getSector({x,y}).unsetVisible();
   }
   setVisible({x=0,y=0}={},direction){
-    if(direction) {x,y} = this.constructor.translate({x,y,direction});
+    if(direction) [x,y] = this.constructor.translate({x,y,direction});
     this.getSector({x,y}).setVisible();
   }
   isSeen({x=0,y=0}={},direction){
-    if(direction) {x,y} = this.constructor.translate({x,y,direction});
+    if(direction) [x,y] = this.constructor.translate({x,y,direction});
     return this.isInbounds({x,y})&&this.getSector({x,y}).isSeen();
   }
   isVisible({x=0,y=0}={},direction){
-    if(direction) {x,y} = this.constructor.translate({x,y,direction});
+    if(direction) [x,y] = this.constructor.translate({x,y,direction});
     return this.isInbounds({x,y})&&this.getSector({x,y}).isVisible();
   }
 
