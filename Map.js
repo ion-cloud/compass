@@ -38,116 +38,205 @@ export class Map{
       row.forEach(sector=> sector.setEmpty());
     });
   }
-  getSector({x=0,y=0}={}){
+  static isTouching({x1=0,y1=0,x2=0,y2=0}={}){
+    if(
+      x1===x2&&y1===y2||
+      x1===x2&&y1===y2-1||
+      x1===x2&&y1===y2+1||
+      x1===x2-1&&y1===y2||
+      x1===x2+1&&y1===y2||
+      x1===x2-1&&y1===y2-1||
+      x1===x2+1&&y1===y2-1||
+      x1===x2+1&&y1===y2+1||
+      x1===x2-1&&y1===y2-1
+    ){
+      return true;
+    } //end if
+    return false;
+  }
+
+  // translate allows a {x,y} point to be translated to a touching sector
+  // before an operation. All functions that operate on a point are supported
+  // Before:
+  //   map.isFloor({x: sector.x+1, y: sector.y})
+  // After:
+  //   map.isFloor(sector,'east');
+  static translate({x=0,y=0,direction}={}){
+    if(direction==='north'){
+      return {x,y:y-1};
+    }else if(direction==='northeast'){
+      return {x:x+1,y:y-1};
+    }else if(direction==='east'){
+      return {x:x+1,y};
+    }else if(direction==='southeast'){
+      return {x:x+1,y:y+1};
+    }else if(direction==='south'){
+      return {x,y:y+1};
+    }else if(direction==='southwest'){
+      return {x:x-1,y:y+1};
+    }else if(direction==='west'){
+      return {x:x-1,y};
+    }else if(direction==='northwest'){
+      return {x:x-1,y:y-1};
+    } //end if
+    return {x,y};
+  }
+  getSector({x=0,y=0}={},direction){
+    if(direction) {x,y} = this.constructor.translate({x,y,direction});
     return this.sectors[y][x];
   }
-  getColors({x=0,y=0}={}){
+
+  // test to make sure the points are within bounds of the map
+  // and optionally (and additionally) between a min/max x/y
+  isInbounds({
+    x=0,y=0,x1=0,y1=0,x2=this.width-1,y2=this.height-1
+  }={},direction){
+    if(direction) {x,y} = this.constructor.translate({x,y,direction});
+    return x>=x1&&x<=x2&&y>=y1&&y<=y2&&
+      x>=0&&y>=0&&x<=this.width-1&&y<=this.height-1;
+  }
+  getColors({x=0,y=0}={},direction){
+    if(direction) {x,y} = this.constructor.translate({x,y,direction});
     return this.getSector({x,y}).getColors();
   }
-  isEmpty({x=0,y=0}={}){
+  isEmpty({x=0,y=0}={},direction){
+    if(direction) {x,y} = this.constructor.translate({x,y,direction});
     return this.getSector({x,y}).isEmpty();
   }
-  setEmpty({x=0,y=0}={}){
+  setEmpty({x=0,y=0}={},direction){
+    if(direction) {x,y} = this.constructor.translate({x,y,direction});
     this.getSector({x,y}).setEmpty();
   }
-  isVoid({x=0,y=0}={}){
+  isVoid({x=0,y=0}={},direction){
+    if(direction) {x,y} = this.constructor.translate({x,y,direction});
     return this.getSector({x,y}).isVoid();
   }
-  setVoid({x=0,y=0}={}){
+  setVoid({x=0,y=0}={},direction){
+    if(direction) {x,y} = this.constructor.translate({x,y,direction});
     this.getSector({x,y}).setVoid();
   }
-  isFloor({x=0,y=0}={}){
+  isFloor({x=0,y=0}={},direction){
+    if(direction) {x,y} = this.constructor.translate({x,y,direction});
     return this.getSector({x,y}).isFloor();
   }
-  setFloor({x=0,y=0}={}){
+  setFloor({x=0,y=0}={},direction){
+    if(direction) {x,y} = this.constructor.translate({x,y,direction});
     this.getSector({x,y}).setFloor();
   }
-  isFloorSpecial({x=0,y=0}={}){
+  isFloorSpecial({x=0,y=0}={},direction){
+    if(direction) {x,y} = this.constructor.translate({x,y,direction});
     return this.getSector({x,y}).isFloorSpecial();
   }
-  setFloorSpecial({x=0,y=0}={}){
+  setFloorSpecial({x=0,y=0}={},direction){
+    if(direction) {x,y} = this.constructor.translate({x,y,direction});
     this.getSector({x,y}).setFloorSpecial();
   }
-  isWall({x=0,y=0}={}){
+  isWall({x=0,y=0}={},direction){
+    if(direction) {x,y} = this.constructor.translate({x,y,direction});
     return this.getSector({x,y}).isWall();
   }
-  setWall({x=0,y=0}={}){
+  setWall({x=0,y=0}={},direction){
+    if(direction) {x,y} = this.constructor.translate({x,y,direction});
     this.getSector({x,y}).setWall();
   }
-  isWallSpecial({x=0,y=0}={}){
+  isWallSpecial({x=0,y=0}={},direction){
+    if(direction) {x,y} = this.constructor.translate({x,y,direction});
     return this.getSector({x,y}).isWallSpecial();
   }
-  setWallSpecial({x=0,y=0}={}){
+  setWallSpecial({x=0,y=0}={},direction){
+    if(direction) {x,y} = this.constructor.translate({x,y,direction});
     this.getSector({x,y}).setWallSpecial();
   }
-  isWater({x=0,y=0}={}){
+  isWater({x=0,y=0}={},direction){
+    if(direction) {x,y} = this.constructor.translate({x,y,direction});
     return this.getSector({x,y}).isWater();
   }
-  setWater({x=0,y=0}={}){
+  setWater({x=0,y=0}={},direction){
+    if(direction) {x,y} = this.constructor.translate({x,y,direction});
     this.getSector({x,y}).setWater();
   }
-  isWaterSpecial({x=0,y=0}){
+  isWaterSpecial({x=0,y=0},direction){
+    if(direction) {x,y} = this.constructor.translate({x,y,direction});
     return this.getSector({x,y}).isWaterSpecial();
   }
-  setWaterSpecial({x=0,y=0}={}){
+  setWaterSpecial({x=0,y=0}={},direction){
+    if(direction) {x,y} = this.constructor.translate({x,y,direction});
     this.getSector({x,y}).setWaterSpecial();
   }
-  isWindow({x=0,y=0}={}){
+  isWindow({x=0,y=0}={},direction){
+    if(direction) {x,y} = this.constructor.translate({x,y,direction});
     return this.getSector({x,y}).isWindow();
   }
-  setWindow({x=0,y=0}={}){
+  setWindow({x=0,y=0}={},direction){
+    if(direction) {x,y} = this.constructor.translate({x,y,direction});
     return this.getSector({x,y}).setWindow();
   }
-  isDoor({x=0,y=0}={}){
+  isDoor({x=0,y=0}={},direction){
+    if(direction) {x,y} = this.constructor.translate({x,y,direction});
     return this.getSector({x,y}).isDoor();
   }
-  isDoorClosed({x=0,y=0}={}){
+  isDoorClosed({x=0,y=0}={},direction){
+    if(direction) {x,y} = this.constructor.translate({x,y,direction});
     return this.getSector({x,y}).isDoorClosed();
   }
-  isDoorOpen({x=0,y=0}={}){
+  isDoorOpen({x=0,y=0}={},direction){
+    if(direction) {x,y} = this.constructor.translate({x,y,direction});
     return this.getSector({x,y}).isDoorOpen();
   }
-  setDoor({x=0,y=0}={}){
+  setDoor({x=0,y=0}={},direction){
+    if(direction) {x,y} = this.constructor.translate({x,y,direction});
     this.getSector({x,y}).setDoor();
   }
-  setDoorOpen({x=0,y=0}={}){
+  setDoorOpen({x=0,y=0}={},direction){
+    if(direction) {x,y} = this.constructor.translate({x,y,direction});
     this.getSector({x,y}).setDoorOpen();
   }
-  setDoorClosed({x=0,y=0}={}){
+  setDoorClosed({x=0,y=0}={},direction){
+    if(direction) {x,y} = this.constructor.translate({x,y,direction});
     this.getSector({x,y}).setDoorClosed();
   }
-  isRemoved({x=0,y=0}={}){
+  isRemoved({x=0,y=0}={},direction){
+    if(direction) {x,y} = this.constructor.translate({x,y,direction});
     return this.getSector({x,y}).isRemoved();
   }
-  setRemoved({x=0,y=0}={}){
+  setRemoved({x=0,y=0}={},direction){
+    if(direction) {x,y} = this.constructor.translate({x,y,direction});
     this.getSector({x,y}).setRemoved();
   }
-  isWalkable({x=0,y=0}={}){
+  isWalkable({x=0,y=0}={},direction){
+    if(direction) {x,y} = this.constructor.translate({x,y,direction});
     return this.getSector({x,y}).isWalkable();
   }
-  isRoom({x=0,y=0}={}){
+  isRoom({x=0,y=0}={},direction){
+    if(direction) {x,y} = this.constructor.translate({x,y,direction});
     return this.getSector({x,y}).id>0;
   }
-  setRoom({x=0,y=0,id=0}={}){
+  setRoom({x=0,y=0,id=0}={},direction){
+    if(direction) {x,y} = this.constructor.translate({x,y,direction});
     this.getSector({x,y}).roomNumber = id;
   }
-  getRoom({x=0,y=0}={}){
+  getRoom({x=0,y=0}={},direction){
+    if(direction) {x,y} = this.constructor.translate({x,y,direction});
     return this.getSector({x,y}).roomNumber;
   }
   isSameRoom({x1=0,y1=0,x2=0,y2=0}={}){
     return this.getSector({x: x1,y: y1}).roomNumber===
       this.getSector({x: x2,y: y2}).roomNumber;
   }
-  unsetVisible({x=0,y=0}={}){
+  unsetVisible({x=0,y=0}={},direction){
+    if(direction) {x,y} = this.constructor.translate({x,y,direction});
     this.getSector({x,y}).unsetVisible();
   }
-  setVisible({x=0,y=0}={}){
+  setVisible({x=0,y=0}={},direction){
+    if(direction) {x,y} = this.constructor.translate({x,y,direction});
     this.getSector({x,y}).setVisible();
   }
-  isSeen({x=0,y=0}={}){
+  isSeen({x=0,y=0}={},direction){
+    if(direction) {x,y} = this.constructor.translate({x,y,direction});
     return this.isInbounds({x,y})&&this.getSector({x,y}).isSeen();
   }
-  isVisible({x=0,y=0}={}){
+  isVisible({x=0,y=0}={},direction){
+    if(direction) {x,y} = this.constructor.translate({x,y,direction});
     return this.isInbounds({x,y})&&this.getSector({x,y}).isVisible();
   }
 
@@ -192,15 +281,6 @@ export class Map{
       result.push('southeast');
     } //end if
     return result;
-  }
-
-  // test to make sure the points are within bounds of the map
-  // and optionally (and additionally) between a min/max x/y
-  isInbounds({
-    x=0,y=0,x1=0,y1=0,x2=this.width-1,y2=this.height-1
-  }={}){
-    return x>=x1&&x<=x2&&y>=y1&&y<=y2&&
-      x>=0&&y>=0&&x<=this.width-1&&y<=this.height-1;
   }
 
   // uses bresenhams line algorithm to acquire an array of points
