@@ -1,12 +1,10 @@
 export class Sector{
-  constructor({map,x=0,y=0,actor=null,category='empty',roomNumber=0}={}){
+  constructor({map,x=0,y=0,actor=null,category='empty'}={}){
     this.map = map;
     this.actor = null;
     this.x = x;
     this.y = y;
     this.category = category;
-    this.type = {}; //holds metadata about the category selected
-    this.roomNumber = roomNumber;
   }
   clone(){
     return new Sector({
@@ -14,8 +12,7 @@ export class Sector{
       x: this.x,
       y: this.y,
       actor: this.actor,
-      category: this.category,
-      roomNumber: this.roomNumber
+      category: this.category
     });
   }
   isEmpty(){
@@ -23,14 +20,12 @@ export class Sector{
   }
   setEmpty(){
     this.category = 'empty';
-    this.type = {};
   }
   isVoid(){
     return this.category === 'void';
   }
   setVoid(){
     this.category = 'void';
-    this.type = {};
   }
   isRemoved(){
     return this.category === 'removed';
@@ -45,23 +40,26 @@ export class Sector{
     return this.category === 'window';
   }
   isDoor(){
-    return this.category === 'door';
+    return this.category.includes('door');
   }
   isDoorClosed(){
-    return this.category === 'door' && !this.doorOpen;
+    return this.category==='door-closed';
   }
   isDoorOpen(){
-    return this.category === 'door' && this.doorOpen;
+    return this.category === 'door-open';
   }
   setDoor(){
-    this.category = 'door';
-    this.doorOpen = Math.random()<0.5?true:false; //random
+    if(Math.random()<0.5){
+      this.category = 'door-open';
+    }else{
+      this.category = 'door-closed';
+    } //end if
   }
   setDoorOpen(){
-    if(this.category==='door') this.doorOpen = true;
+    this.category = 'door-open';
   }
   setDoorClosed(){
-    if(this.category==='door') this.doorOpen = false;
+    this.category = 'door-closed';
   }
   isFloor(){
     return this.category === 'floor' || this.category === 'floorSpecial';
@@ -104,7 +102,7 @@ export class Sector{
 
     if(this.isFloor()) walkable = true;
     if(this.isFloorSpecial()) walkable = true;
-    if(this.isDoor()&&this.isDoorOpen()) walkable = true;
+    if(this.isDoorOpen()) walkable = true;
     if(this.isWater()) walkable = true;
     return walkable;
   }
