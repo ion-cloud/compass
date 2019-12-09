@@ -65,33 +65,12 @@ export function arroyo({map}){
   const x2 = x, y2 = y;
 
   // now we'll draw the path between the points
-  [
-    ...map.findPath({
-      x1,y1,
-      x2:Math.floor(map.width/2),
-      y2:Math.floor(map.height/2)
-    }),
-    ...map.findPath({
-      x1:Math.floor(map.width/2),
-      y1:Math.floor(map.height/2),
-      x2,y2
-    })
-  ].forEach(sector=>{
-    const x = sector.x, y = sector.y;
-
-    map.setWater({x,y});
-    map.getNeighbors({
-      x, y, self: true, orthogonal: false,
-      test(sector){
-        return sector.isWalkable();
-      }
-    }).forEach(sector=> sector.setWater());
-    map.getNeighbors({
-      x, y, cardinal: false, size: 2,
-      test(sector){
-        return sector.isWalkable()&&!sector.isWater();
-      }
-    }).forEach(sector=>{
+  map.drunkenPath({
+    x1,y1,
+    x2:Math.floor(map.width/2),
+    y2:Math.floor(map.height/2),
+    wide:true,
+    draw(sector){
       sector.setFloorSpecial();
 
       // small chance to venture slightly further
@@ -104,7 +83,27 @@ export function arroyo({map}){
           }
         }).forEach(sector=> Math.random()<0.5?sector.setFloorSpecial():null);
       } //end if
-    });
+    }
+  });
+  map.drunkenPath({
+    x1:Math.floor(map.width/2),
+    y1:Math.floor(map.height/2),
+    x2,y2,
+    wide:true,
+    draw(sector){
+      sector.setFloorSpecial();
+
+      // small chance to venture slightly further
+      if(Math.random()<0.5){
+        map.getNeighbors({
+          x: sector.x, y: sector.y, size: 2,
+          test(sector){
+            return sector.isWalkable()&&
+              !sector.isWater()&&!sector.isFloorSpecial();
+          }
+        }).forEach(sector=> Math.random()<0.5?sector.setFloorSpecial():null);
+      } //end if
+    }
   });
 
   // convert gulch to arroyo

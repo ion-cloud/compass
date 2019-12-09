@@ -55,7 +55,23 @@ export function exhumedRiverChannel({map}){
   let x2 = x, y2 = y;
 
   // now we'll draw the path between the points
-  map.findPath({x1,y1,x2,y2}).forEach(sector=> drawPath(map,sector));
+  map.drunkenPath({
+    x1,y1,x2,y2,wide:true,
+    draw(sector){
+      sector.setWater();
+
+      // small chance to venture slightly further
+      if(Math.random()<0.5){
+        map.getNeighbors({
+          x: sector.x, y: sector.y, size: 3,
+          test(sector){
+            return sector.isWalkable()&&
+              !sector.isWater()&&!sector.isFloorSpecial();
+          }
+        }).forEach(sector=> Math.random()<0.5?sector.setFloorSpecial():null);
+      } //end if
+    }
+  });
 
   // 50% chance to have a forked river
   if(Math.random()<0.5){
@@ -64,7 +80,23 @@ export function exhumedRiverChannel({map}){
     x2 = x; y2 = y;
 
     // now we'll draw the fork of the path
-    map.findPath({x1,y1,x2,y2}).forEach(sector=> drawPath(map,sector));
+    map.drunkenPath({
+      x1,y1,x2,y2,wide:true,
+      draw(sector){
+        sector.setWater();
+
+        // small chance to venture slightly further
+        if(Math.random()<0.5){
+          map.getNeighbors({
+            x: sector.x, y: sector.y, size: 3,
+            test(sector){
+              return sector.isWalkable()&&
+                !sector.isWater()&&!sector.isFloorSpecial();
+            }
+          }).forEach(sector=> Math.random()<0.5?sector.setFloorSpecial():null);
+        } //end if
+      }
+    });
   } //end if
 
   // now close everything not close enough to the exhumed channel
@@ -105,48 +137,3 @@ function getValidTerminalPoint(map,{xmin,xmax,ymin,ymax}){
   }while(!map.isWalkable({x,y}))
   return {x,y};
 } //end getValidTerminalPoint()
-
-//eslint-disable-next-line complexity
-function drawPath(map, sector){
-  const x = sector.x, y = sector.y;
-
-  let n=false,s=false,e=false,w=false;
-
-  map.setWater({x,y});
-  if(map.isInbounds({x: x-1,y})&&map.isWalkable({x: x-1,y})){
-    if(Math.random()<0.5){
-      map.setWater({x: x-1,y});
-      w = true;
-    } //end if
-  } //end if
-  if(map.isInbounds({x: x+1,y})&&map.isWalkable({x: x+1,y})){
-    if(Math.random()<0.5){
-      map.setWater({x: x+1,y});
-      e = true;
-    } //end if
-  } //end if
-  if(map.isInbounds({x,y: y-1})&&map.isWalkable({x,y: y-1})){
-    if(Math.random()<0.5){
-      map.setWater({x,y: y-1});
-      n = true;
-    } //end if
-  } //end if
-  if(map.isInbounds({x,y: y+1})&&map.isWalkable({x,y: y+1})){
-    if(Math.random()<0.5){
-      map.setWater({x,y: y+1});
-      s = true;
-    } //end if
-  } //end if
-  if(map.isInbounds({x: x+1,y: y-1})&&map.isWalkable({x: x+1,y: y-1})&&(n||e)){
-    if(Math.random()<0.5) map.setWater({x: x+1,y: y-1});
-  } //end if
-  if(map.isInbounds({x: x+1,y: y+1})&&map.isWalkable({x: x+1,y: y+1})&&(s||e)){
-    if(Math.random()<0.5) map.setWater({x: x+1,y: y+1});
-  } //end if
-  if(map.isInbounds({x: x-1,y: y+1})&&map.isWalkable({x: x-1,y: y+1})&&(s||w)){
-    if(Math.random()<0.5) map.setWater({x: x-1,y: y+1});
-  } //end if
-  if(map.isInbounds({x: x-1,y: y-1})&&map.isWalkable({x: x-1,y: y-1})&&(n||w)){
-    if(Math.random()<0.5) map.setWater({x: x-1,y: y-1});
-  } //end if
-} //end drawPath()
