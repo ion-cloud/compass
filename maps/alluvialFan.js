@@ -17,6 +17,10 @@ export function alluvialFan({map}){
     // land on the wall that a be a start of the stream and a water area
     // near the middle of the screen it can outlet into
     do{
+
+      // make sure we seed each time; otherwise we're just
+      // generating the same failing map over and over
+      map.noise.seed();
       viableStartSectors.length = 0;
       viableEndSectors.length = 0;
       map.sectors.forEach(row=>{
@@ -53,60 +57,38 @@ export function alluvialFan({map}){
     // we continue looping until we find a stream that outlets far enough
     // from the edge of the screen and where the start and end sectors
     // are far enough from each other
+    riverSuccess = false;
+    riverSectors.length = 0;
+    terminalSector = null;
     do{
-      riverSuccess = false;
-      riverSectors.length = 0;
-      terminalSector = null;
-      do{
 
-        /*eslint-disable no-labels*/
-        if(!viableStartSectors.length) continue generator;
-        if(!viableEndSectors.length) continue generator;
-        /*eslint-enable no-labels*/
+      /*eslint-disable no-labels*/
+      if(!viableStartSectors.length) continue generator;
+      if(!viableEndSectors.length) continue generator;
+      /*eslint-enable no-labels*/
 
-        startSector = map.constructor.shuffle(viableStartSectors).pop();
-        endSector = map.constructor.shuffle(viableEndSectors).pop();
-        a1 = Math.pow(endSector.x-startSector.x,2);
-        a2 = Math.pow(endSector.y-startSector.y,2);
-      }while(Math.sqrt(a1+a2)<=alluvialDistance*2)
-      let terminateEarly = false;
+      startSector = map.constructor.shuffle(viableStartSectors).pop();
+      endSector = map.constructor.shuffle(viableEndSectors).pop();
+      a1 = Math.pow(endSector.x-startSector.x,2);
+      a2 = Math.pow(endSector.y-startSector.y,2);
+    }while(Math.sqrt(a1+a2)<=alluvialDistance*2)
+    map.drunkenPath({
+      x1: startSector.x, y1: startSector.y,
+      x2: endSector.x, y2: endSector.y,
 
-      map.drunkenPath({
-        x1: endSector.x, y1: endSector.y,
-        x2: startSector.x, y2: startSector.y,
-
-        //eslint-disable-next-line no-loop-func
-        draw(sector){
-          if(!terminateEarly){
-            const count = map.getNeighbors({
-              x: sector.x, y: sector.y,self: true,
-              test(sector){
-                return sector.isWater();
-              }
-            }).length;
-
-            if(count){
-              terminalSector = sector;
-              terminateEarly = true;
-            }else{
-              riverSectors.push(sector);
-            } //end if
-          } //end if
-        }
-      });
-      if(!terminalSector) terminalSector = endSector;
-      a1 = Math.pow(terminalSector.x-startSector.x,2);
-      a2 = Math.pow(terminalSector.y-startSector.y,2);
-      riverSuccess = Math.sqrt(a1+a2)>alluvialDistance*2;
-    }while(!riverSuccess);
-
-    // this restarts the generation if the river flows through
-    // a body of water. This works because the river automatically
-    // stops when it hits water, if the length of the river is
-    // less than the straightest distance between two points then
-    // it's obviously wrong
-    if(riverSectors.length>=Math.sqrt(a1+a2)) mapSuccess = true;
-  }while(!mapSuccess); //will always exit
+      //eslint-disable-next-line no-loop-func
+      draw(sector){
+        if(!terminalSector&&!sector.isWater()){
+          riverSectors.push(sector);
+        }else if(!terminalSector){
+          terminalSector = sector;
+        } //end if
+      }
+    });
+    a1 = Math.pow(terminalSector.x-startSector.x,2);
+    a2 = Math.pow(terminalSector.y-startSector.y,2);
+    riverSuccess = Math.sqrt(a1+a2)>alluvialDistance*2;
+  }while(!riverSuccess);
 
   // now we'll draw the actual alluvial fan
   const r = Math.floor(alluvialDistance/2), //radius
@@ -179,7 +161,7 @@ export function alluvialFan({map}){
         h = d?7:10, //horizontal
         v = d?10:7; //vertical
 
-  map.noise = new Noise(Math.random());
+  map.noise.seed();
   map.sectors.forEach(row=>{
     row.forEach(sector=>{
       const n = (1+map.noise.simplex2(sector.x/map.width*h,sector.y/map.height*v))/2;
