@@ -405,7 +405,9 @@ export class Map{
 
   // find a path between two points that passes the `test` function when applied
   // to each sector
-  findPath({x1=0,y1=0,x2=0,y2=0,test=()=>true,map=this}={}){
+  findPath({
+    x1=0,y1=0,x2=0,y2=0,test=()=>true,map=this,orthogonal=false
+  }={}){
     const weight = 1,
           heuristic = (dx, dy) => dx + dy, //manhattan heuristic
           openList = new Heap([],(a,b)=>b.path.f-a.path.f>0),
@@ -447,7 +449,7 @@ export class Map{
 
       // get neighbours of the current node
       const neighbors = clone.getNeighbors({
-        x: node.x,y: node.y, orthogonal: false, test
+        x: node.x,y: node.y, orthogonal, test
       });
 
       for (let i = 0, ng; i < neighbors.length; ++i) {
