@@ -84,6 +84,13 @@ export class Heap{
       selectedIndex = parentIndex; //continue up the tree
     }
   }
+  updateItem(item){
+    const index = this.values.indexOf(item);
+
+    if(index===-1) return;
+    this.sink(index);
+    this.float(index);
+  }
   pop(){
     const result = this.values[0],
           top = this.values.pop();

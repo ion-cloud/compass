@@ -421,11 +421,11 @@ export class Map{
   // find a path between two points that passes the `test` function when applied
   // to each sector
   findPath({
-    x1=0,y1=0,x2=0,y2=0,test=()=>true,map=this,orthogonal=false
+    x1=0,y1=0,x2=0,y2=0,test=()=>true,map=this,orthogonal=false,
+    computeWeight=sector=>1
   }={}){
-    const weight = 1,
-          heuristic = (dx, dy) => dx + dy, //manhattan heuristic
-          openList = new Heap([],(a,b)=>b.path.f-a.path.f>0),
+    const heuristic = (dx, dy) => dx + dy, //manhattan heuristic
+          openList = new Heap([],(a,b)=> b.path.f-a.path.f>0),
           abs = Math.abs, //shorten reference
           clone = this.clone(), //so we can mutate it and destroy it when done
           SQRT2 = Math.SQRT2; //shorten reference
@@ -483,13 +483,20 @@ export class Map{
         // can be reached with smaller cost from the current node
         if (!neighbor.path.opened || ng < neighbor.path.g) {
           neighbor.path.g = ng;
-          neighbor.path.h = neighbor.path.h || weight * heuristic(abs(x - x2), abs(y - y2));
+          neighbor.path.h = neighbor.path.h || 
+            computeWeight(neighbor) * heuristic(abs(x - x2), abs(y - y2));
           neighbor.path.f = neighbor.path.g + neighbor.path.h;
           neighbor.path.parent = node;
 
           if (!neighbor.path.opened) {
             openList.push(neighbor);
             neighbor.path.opened = true;
+          }else{
+
+            // the neighbor can be reached with smaller cost.
+            // Since its f value has been updated, we have to
+            // update its position in the open list
+            openList.updateItem(neighbor);
           } //end if
         } //end if
       } // end for each neighbor
