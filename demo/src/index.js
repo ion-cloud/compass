@@ -18,7 +18,7 @@ if(!easel.activated){
 }else{
   noscript.style.display='none';
   const map = new Map(50,50),
-        arroyo = maps.find(map=> map.name==='organized rooms');
+        {generator} = maps.find(map=> map.name==='clustered rooms');
 
   for(let y=0;y<map.height;y++){
     map.sectors[y]=[];
@@ -26,7 +26,7 @@ if(!easel.activated){
       map.sectors[y][x]=new Sector({x,y,map});
     } //end for
   } //end for
-  arroyo.generator({map});
+  generator({map});
   easel.onDraw = function(){
     const rh = easel.viewport.h/map.height, rw = easel.viewport.w/map.width;
 

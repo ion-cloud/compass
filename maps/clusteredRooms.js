@@ -79,7 +79,10 @@ export function clusteredRooms({map,retry=5}){
     }//end if
     length = getHallwayLength();
     target = getTargetCoordinates({x,y,direction,length});
-    path = map.bresenhamsLine({x1:x,y1:y,x2:target.x,y2:target.y});
+    path = map.findPath({
+      x1:x,y1:y,x2:target.x,y2:target.y,
+      computeWeight:sector=>sector.isEmpty()?3:sector.isFloor()?1:100
+    });
     if(path) path.shift(); // remove the starting point
   }while(nodes.length||leafs.length)
 
@@ -97,9 +100,9 @@ export function clusteredRooms({map,retry=5}){
   // if we don't meet the requiredRooms and we still have retries left then
   // go ahead and retry; otherwise accept the current result
   if(rooms>requiredRooms){
-    wallify();
+    removeDeadEnds();wallify();
   }else if(!retry){
-    wallify();
+    removeDeadEnds();wallify();
   }else{
     map.reset();
     clusteredRooms({map,retry:retry-1});
@@ -204,18 +207,48 @@ export function clusteredRooms({map,retry=5}){
     return rooms;
   } //end buildRoom()
 
+  // We find the end of a hallway and recursively work backwards until
+  // we find a door or more than one hallway directional path
+  function removeDeadEnds(){
+    map.sectors.flat().forEach(sector=>{
+      if(!sector.isFloorSpecial()) return; //short-circuit
+      let neighbors = map.getNeighbors({
+        sector,orthogonal:false,
+        test:sector=> sector.isFloorSpecial()||sector.isDoor()
+      });
+
+      if(neighbors.length>1) return; //short-circuit
+
+      // now we recursively walk backwards down the hallway cleaning it up
+      let current = sector;
+
+      do{
+        const next = neighbors.pop();
+
+        current.setEmpty();
+        current = next;
+        neighbors = map.getNeighbors({
+          sector:current,orthogonal:false,
+          test:sector=> sector.isFloorSpecial()||sector.isDoor()
+        });
+      }while(neighbors.length===1)
+    });
+  }
+
   // surround the corridors that arent surrounded with walls yet with walls now.
   function wallify(){
-    map.sectors.forEach(row=>{
-      row.forEach(sector=>{
-        if(!sector.isFloorSpecial()) return;
+    map.sectors.flat().forEach(sector=>{
+      if(!sector.isEmpty()&&!sector.isWall()) return; //short-circuit
+      if(
         map.getNeighbors({
-          x: sector.x,y: sector.y,
-          test(sector){
-            return sector.isEmpty();
-          }
-        }).forEach(sector=> sector.setWall());
-      });
+          sector,orthogonal:true,
+          test:sector=>sector.isWalkable()
+        }).length
+      ){
+        sector.setWall();
+      }else{
+        sector.setEmpty();
+      } //end if
     });
   } //end wallify()
 } //end function
