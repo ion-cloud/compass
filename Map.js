@@ -332,7 +332,7 @@ export class Map{
   // Can specify whether or not testing of orthogonal, cardinal or the
   // originating sector. `size` will expand to not just nearby sectors
   getNeighbors({
-    x=0,y=0,size=1,
+    sector,x=sector.x,y=sector.y,size=1,
     orthogonal=true,cardinal=true,self=false,
     test=()=>true
   }={}){
@@ -360,8 +360,15 @@ export class Map{
   // return a seemingly random path between two points. `wide` will
   // have the path be occasionally wider than 1 sector. `draw` function
   // will be applied to each sector in the path
-  drunkenPath({x1=0,y1=0,x2=0,y2=0,wide=false,draw=()=>true}={}){
-    const map = this.clone();
+  drunkenPath({
+    x1=0,y1=0,x2=0,y2=0,wide=false,draw=()=>true,
+    constrain=false
+  }={}){
+    const map = this.clone(),
+          minX = Math.min(x1,x2),
+          maxX = Math.max(x1,x2),
+          minY = Math.min(y1,y2),
+          maxY = Math.max(y1,y2);
 
     let path;
 
@@ -386,7 +393,9 @@ export class Map{
       path = map.findPath({
         x1,y1,x2,y2,map,
         test(sector){
-          return sector.isWalkable();
+          return sector.isWalkable()&&
+            sector.x>=minX&&sector.x<=maxX&&
+            sector.y>=minY&&sector.y<=maxY;
         }
       });
     }while(path===null)

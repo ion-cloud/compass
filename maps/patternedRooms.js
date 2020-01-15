@@ -52,7 +52,10 @@ class Partition{
       }else{ //can't split horizontally, too small - close nodes
         this.left = {closed: true};
         this.right = {closed: true};
-        this.fill();
+        this.map.fillRect({
+          x1:this.x1,y1:this.y1,x2:this.x2-1,y2:this.y2-1,
+          draw:sector=>sector.setFloor()
+        });
       } //end if
 
     // splitting vertically
@@ -64,22 +67,11 @@ class Partition{
     }else{ //can't split vertically, too small - close nodes
       this.left = {closed: true};
       this.right = {closed: true};
-      this.fill();
+      this.map.fillRect({
+        x1:this.x1,y1:this.y1,x2:this.x2-1,y2:this.y2-1,
+        draw:sector=>sector.setFloor()
+      });
     } //end if
-  }
-
-  // Fill is called when the partition can no longer be broken down into
-  // smaller partitions.
-  fill(){
-    for(let y=this.y1-1;y<=this.y2;y++){
-      for(let x=this.x1-1;x<=this.x2;x++){
-        if(x===this.x1-1||x===this.x2||y===this.y1-1||y===this.y2){
-          this.map.setEmpty({x,y});
-        }else{
-          this.map.setFloor({x,y});
-        } //end if
-      } //end for
-    } //end for
   }
 
   //Connect is called after all the partitions are finished. It loops through
@@ -190,9 +182,9 @@ export function patternedRooms({map}){
 
           currentRoom.sectors.forEach(({x,y})=> map.setEmpty({x,y}));
           map.drunkenPath({
-            x1,y1,x2,y2,
+            x1,y1,x2,y2,constrain:true,
             draw(sector){
-              if(!sector.isDoor()) sector.setFloor();
+              sector.setFloor();
             }
           });
         } //end if
@@ -203,40 +195,46 @@ export function patternedRooms({map}){
   // now finally clean up doors. We don't need a door in the middle of a hallway
   map.sectors.flat().filter(sector=> sector.isDoor())
     .forEach(sector=>{
-      let touchingWalls=0;
-
-      if(map.isInbounds(sector,'northwest')&&map.isWall(sector,'northwest')){
-        touchingWalls++;
+      if(
+        map.isInbounds(sector,'north')&&map.isFloor(sector,'north')&&
+        map.isInbounds(sector,'south')&&map.isFloor(sector,'south')&&
+        map.getNeighbors({
+          sector: map.getSector(sector,'north'),
+          orthogonal: false,
+          test(sector){
+            return sector.isFloor();
+          }
+        }).length===2&&
+        map.getNeighbors({
+          sector: map.getSector(sector,'south'),
+          orthogonal: false,
+          test(sector){
+            return sector.isFloor()
+          }
+        }).length===2
+      ){
+        sector.setFloor();
+      }else if(
+        map.isInbounds(sector,'west')&&map.isFloor(sector,'west')&&
+        map.isInbounds(sector,'east')&&map.isFloor(sector,'east')&&
+        map.getNeighbors({
+          sector: map.getSector(sector,'west'),
+          orthogonal: false,
+          test(sector){
+            return sector.isFloor();
+          }
+        }).length===2&&
+        map.getNeighbors({
+          sector: map.getSector(sector,'east'),
+          orthogonal: false,
+          test(sector){
+            return sector.isFloor()
+          }
+        }).length===2
+      ){
+        sector.setFloor();
       } //end if
-      if(map.isInbounds(sector,'north')&&map.isWall(sector,'north')){
-        touchingWalls++;
-      } //end if
-      if(map.isInbounds(sector,'northeast')&&map.isWall(sector,'northeast')){
-        touchingWalls++;
-      } ///end if
-      if(map.isInbounds(sector,'east')&&map.isWall(sector,'east')){
-        touchingWalls++;
-      } //end if
-      if(map.isInbounds(sector,'southeast')&&map.isWall(sector,'southeast')){
-        touchingWalls++;
-      } //end if
-      if(map.isInbounds(sector,'south')&&map.isWall(sector,'south')){
-        touchingWalls++;
-      } //end if
-      if(map.isInbounds(sector,'southwest')&&map.isWall(sector,'southwest')){
-        touchingWalls++;
-      } //end if
-      if(map.isInbounds(sector,'west')&&map.isWall(sector,'west')){
-        touchingWalls++;
-      } //end if
-      if(touchingWalls>4) sector.setFloor();
     });
-
-  // remove orphaned rooms and sections
-  map.clipOrphaned({
-    test:sector=> sector.isFloor()||sector.isDoor(),
-    failure:sector=> sector.setEmpty()
-  });
 
   // wallify the map
   map.sectors.forEach(row=>{
