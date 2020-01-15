@@ -257,44 +257,48 @@ export class Map{
   }
 
   //eslint-disable-next-line complexity
-  getNearVisible({x,y}){
+  getNearbyVisible({x,y,includeBoundary=false}){
     const result = [];
 
-    if(x===this.width&&this.isVisible({x: x-1,y})||this.isVisible({x: x-1,y})){
-      result.push('west');
-    } //end if
-    if(x===-1&&this.isVisible({x: x+1,y})||this.isVisible({x: x+1,y})){
-      result.push('east');
-    } //end if
-    if(y===this.height&&this.isVisible({x,y: y-1})||this.isVisible({x,y: y-1})){
-      result.push('north');
-    } //end if
-    if(y===-1&&this.isVisible({x,y: y+1})||this.isVisible({x,y: y+1})){
-      result.push('south');
-    } //end if
-    if(
-      x===this.width&&y===this.height&&this.isVisible({x: x-1,y: y-1})||
-      this.isVisible({x: x-1,y: y-1})
-    ){
-      result.push('northwest');
-    } //end if
-    if(
-      x===-1&&y===this.height&&this.isVisible({x: x+1,y: y-1})
-     ||this.isVisible({x: x+1,y: y-1})
-    ){
-      result.push('northeast');
-    } //end if
-    if(
-      x===this.width&&y===-1&&this.isVisible({x: x-1,y: y+1})||
-      this.isVisible({x: x-1,y: y+1})
-    ){
-      result.push('southwest');
-    } //end if
-    if(
-      x===-1&&y===-1&&this.isVisible({x: x+1,y: y+1})||
-      this.isVisible({x: x+1,y: y+1})
-    ){
-      result.push('southeast');
+    if(!this.isInbounds({x,y})&&includeBoundary){
+      if(x===-1&&y===-1&&this.isVisible({x:x+1,y:y+1})){
+        result.push('north');result.push('west');
+      }else if(x===-1&&y===this.height&&this.isVisible({x:x+1,y:y-1})){
+        result.push('south');result.push('west');
+      }else if(x===this.width&&y===-1&&this.isVisible({x:x-1,y:y+1})){
+        result.push('north');result.push('east');
+      }else if(x===this.width&&y===this.height&&this.isVisible({x:x-1,y:y-1})){
+        result.push('south');result.push('east');
+      }else if(x===-1&&(
+        this.isVisible({x:x+1,y:y-1})||
+        this.isVisible({x:x+1,y})||
+        this.isVisible({x:x+1,y:y+1}))
+      ){
+        result.push('west');
+      }else if(x===this.width&&(
+        this.isVisible({x:x-1,y:y-1})||
+        this.isVisible({x:x-1,y})||
+        this.isVisible({x:x-1,y:y+1}))
+      ){
+        result.push('east');
+      }else if(y===-1&&(
+        this.isVisible({x:x-1,y:y+1})||
+        this.isVisible({x,y:y+1})||
+        this.isVisible({x:x+1,y:y+1}))
+      ){
+        result.push('north');
+      }else if(y===this.height&&(
+        this.isVisible({x:x-1,y:y-1})||
+        this.isVisible({x,y:y-1})||
+        this.isVisible({x:x+1,y:y-1}))
+      ){
+        result.push('south');
+      } //end if
+    }else if(this.isInbounds({x,y})){
+      if(this.isVisible({x:x-1,y})) result.push('west');
+      if(this.isVisible({x:x+1,y})) result.push('east');
+      if(this.isVisible({x,y:y-1})) result.push('north');
+      if(this.isVisible({x,y:y+1})) result.push('south');
     } //end if
     return result;
   }
@@ -887,4 +891,5 @@ export class Map{
     });
   }
 }
+
 
