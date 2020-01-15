@@ -347,6 +347,8 @@ export class Map{
       for(let cx=x-size;cx<=x+size;cx++){
         if(cx===x&&cy===y&&self){
           listAdd({x: cx, y: cy});
+        }else if(cx===x&&cy===y&&!self){
+          continue;
         }else if(cx===x&&cardinal||cy===y&&cardinal){ //cardinal
           listAdd({x: cx, y: cy});
         }else if(orthogonal){ //orthogonal

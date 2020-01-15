@@ -6,12 +6,41 @@ export function organizedRooms({map}){
       y=Math.floor(map.height/2), //current y position
       currentRoomNumber=1;
 
-  createCorridors();
+  createHallways();
   allocateRooms();
+  removeDeadEnds();
   buildWalls();
   return map;
 
-  // This function checks to see if the tileCorridors will create
+  // We find the end of a hallway and recursively work backwards until
+  // we find a door or more than one hallway directional path
+  function removeDeadEnds(){
+    map.sectors.flat().forEach(sector=>{
+      if(!sector.isFloorSpecial()) return; //short-circuit
+      let neighbors = map.getNeighbors({
+        sector,orthogonal:false,
+        test:sector=> sector.isFloorSpecial()||sector.isDoor()
+      });
+
+      if(neighbors.length>1) return; //short-circuit
+
+      // now we recursively walk backwards down the hallway cleaning it up
+      let current = sector;
+
+      do{
+        const next = neighbors.pop();
+
+        current.setEmpty();
+        current = next;
+        neighbors = map.getNeighbors({
+          sector:current,orthogonal:false,
+          test:sector=> sector.isFloorSpecial()||sector.isDoor()
+        });
+      }while(neighbors.length===1)
+    });
+  }
+
+  // This function checks to see if the hallways will create
   // a square. We can't allow this, so we return true if they will and
   // prevent it in the move function
   //eslint-disable-next-line complexity
@@ -198,9 +227,9 @@ export function organizedRooms({map}){
     });
   } //end allocateRooms()
 
-  // Drunk walker makes corridors according to the
+  // Drunk walker makes hallways according to the
   // restriction that we need to leave enough space for rooms
-  function createCorridors(){
+  function createHallways(){
     let fail=0, win=0, direction;
 
     while(fail<750&&win<map.width+map.height){
@@ -217,77 +246,21 @@ export function organizedRooms({map}){
         fail++;
       } //end if
     } //end while
-
-    // now we carve the dead ends before we start applying rooms to the
-    // corridors; otherwise we might create orphaned rooms if we prune
-    // it later
-    /* eslint-disable complexity */
-    map.sectors.forEach((row,y)=>{
-      row.forEach((sector,x)=>{
-        if(
-          sector.isEmpty()&&(
-            map.isInbounds({x: x-1,y})&&map.isFloorSpecial({x: x-1,y})&&
-            map.isInbounds({x: x+1,y})&&map.isFloorSpecial({x: x+1,y})||
-            map.isInbounds({x,y: y-1})&&map.isFloorSpecial({x,y: y-1})&&
-            map.isInbounds({x,y: y+1})&&map.isFloorSpecial({x,y: y+1})||
-            map.isInbounds({x: x-1,y})&&map.isFloorSpecial({x: x-1,y})&&
-            map.isInbounds({x,y: y+1})&&map.isFloorSpecial({x,y: y+1})&&
-            map.isInbounds({x: x-2,y})&&map.isFloorSpecial({x: x-1,y})&&
-            map.isInbounds({x,y: y+2})&&map.isFloorSpecial({x,y: y+2})||
-            map.isInbounds({x,y: y+1})&&map.isFloorSpecial({x,y: y+1})&&
-            map.isInbounds({x: x+1,y})&&map.isFloorSpecial({x: x+1,y})&&
-            map.isInbounds({x,y: y+2})&&map.isFloorSpecial({x,y: y+2})&&
-            map.isInbounds({x: x+2,y})&&map.isFloorSpecial({x: x+2,y})||
-            map.isInbounds({x: x+1,y})&&map.isFloorSpecial({x: x+1,y})&&
-            map.isInbounds({x,y: y-1})&&map.isFloorSpecial({x,y: y-1})&&
-            map.isInbounds({x: x+2,y})&&map.isFloorSpecial({x: x+2,y})&&
-            map.isInbounds({x,y: y-2})&&map.isFloorSpecial({x,y: y-2})||
-            map.isInbounds({x,y: y-1})&&map.isFloorSpecial({x,y: y-1})&&
-            map.isInbounds({x: x-1,y})&&map.isFloorSpecial({x: x-1,y})&&
-            map.isInbounds({x,y: y-2})&&map.isFloorSpecial({x,y: y-2})&&
-            map.isInbounds({x: x-2,y})&&map.isFloorSpecial({x: x-2,y})
-          )
-        ){
-          map.setEmpty(x-1,y-1);map.setEmpty(x,y-1);map.setEmpty(x+1,y-1);
-          map.setEmpty(x-1,y);map.setEmpty(x+1,y);
-          map.setEmpty(x-1,y+1);map.setEmpty(x,y+1);map.setEmpty(x+1,y+1);
-        } //end if
-      });
-    });
-    /* eslint-enable complexity */
-  } //end createCorridors()
+  } //end createHallways()
 
   // Surround all floors traversable with walls
   function buildWalls(){
-    map.sectors.forEach((row,y)=>{
-      row.forEach((sector,x)=>{
-        if(sector.isFloor()){
-          if(map.isInbounds({x: x-1,y})&&map.isEmpty({x: x-1,y})){
-            map.setWall({x: x-1,y});
-          } //end if
-          if(map.isInbounds({x: x+1,y})&&map.isEmpty({x: x+1,y})){
-            map.setWall({x: x+1,y});
-          } //end if
-          if(map.isInbounds({x,y: y-1})&&map.isEmpty({x,y: y-1})){
-            map.setWall({x,y: y-1});
-          } //end if
-          if(map.isInbounds({x,y: y+1})&&map.isEmpty({x,y: y+1})){
-            map.setWall({x,y: y+1});
-          } //end if
-          if(map.isInbounds({x: x-1, y: y-1})&&map.isEmpty({x: x-1,y: y-1})){
-            map.setWall({x: x-1,y: y-1});
-          } //end if
-          if(map.isInbounds({x: x+1, y: y+1})&&map.isEmpty({x: x+1,y: y+1})){
-            map.setWall({x: x+1,y: y+1});
-          } //end if
-          if(map.isInbounds({x: x-1, y: y+1})&&map.isEmpty({x: x-1,y: y+1})){
-            map.setWall({x: x-1,y: y+1});
-          } //end if
-          if(map.isInbounds({x: x+1, y: y-1})&&map.isEmpty({x: x+1,y: y-1})){
-            map.setWall({x: x+1,y: y-1});
-          } //end if
-        } //end if
-      });
+    map.sectors.flat().forEach(sector=>{
+      if(!sector.isEmpty()) return; //short-circuit
+      if(
+        sector.isEmpty()&&
+        map.getNeighbors({
+          sector,orthogonal:true,
+          test:sector=>sector.isWalkable()
+        }).length
+      ){
+        sector.setWall();
+      } //end if
     });
   } //end buildWalls()
 } //end function
