@@ -1,4 +1,4 @@
-const MAPTYPES = [
+const mapTypes = [
   {
     name: 'standard crypt',
     waterChance: 5,
@@ -134,34 +134,15 @@ const MAPTYPES = [
   }
 ];
 
-const ROOMTYPES = [
+const roomTypes = [
   'normal','dispersion','water islands','water island walkways',
   'water island','water pool'
 ];
-const ROOMTYPES_NONWATER = ROOMTYPES.filter(r=>!r.includes('water'));
-
-const N = 0;
-const S = 1;
-const E = 2;
-const W = 3;
-
-// rf stands for random number floored
-// it takes an optional second param which means we need a random
-// number between the range of num1 and num2
-function rf(num1,num2){
-  let result;
-
-  if(num2){
-    result = num1+Math.floor(Math.random()*num2);
-  }else{
-    result = Math.floor(Math.random()*num1);
-  } //end if
-  return result;
-} //end rf()
+const roomTypesNonWater = roomTypes.filter(r=>!r.includes('water'));
 
 // given a certain procedural type randomly select the room shape
 function getRoomShape(proceduralType){
-  const d100 = rf(100);
+  const d100 = Math.floor(Math.random()*100);
 
   let roomShape;
 
@@ -172,7 +153,7 @@ function getRoomShape(proceduralType){
 
 // given a certain procedural type and shape randomly select a room size
 function getRoomSize(proceduralType,shapeName){
-  const d100 = rf(100),
+  const d100 = Math.floor(Math.random()*100),
         roomShape =  proceduralType.roomShape.find(s=>s.name===shapeName);
 
   let roomSize;
@@ -183,10 +164,15 @@ function getRoomSize(proceduralType,shapeName){
 } //end getRoomSize()
 
 // eslint-disable-next-line complexity
-export function ruins({map}){
+export function ruins({
+  map,templateName=[
+    'standard crypt','ancient crypt','crypt catacombs','marshy dredge',
+    'wide passages','deep passages'
+  ][Math.floor(Math.random()*6)]
+}={}){
   const size = map.width,
         todo = [], //holds the list of directions that need to be searched
-        proceduralType=MAPTYPES[rf(MAPTYPES.length)];
+        proceduralType=mapTypes.find(template=>template.name===templateName);
 
   let cx = Math.floor(map.width/2),
       cy = Math.floor(map.height/2),
@@ -204,16 +190,11 @@ export function ruins({map}){
     // by creating a room in the center of the entire map, else we will use
     // one of the starting points our last room left for us
     if(step!==1){
-      for (let i = todo.length,j,x; i; i -= 1) { //shuffle the array
-        j = rf(i);
-        x = todo[i - 1];
-        todo[i - 1] = todo[j];
-        todo[j] = x;
-      } //end for
-      next=todo.pop(); //now it's shuffled, take a todo off list and start
+      map.constructor.shuffle(todo);
+      next=todo.shift(); //now it's shuffled, take a todo off list and start
       cx=next.x;
       cy=next.y;
-      roomDirection=next.rd;
+      roomDirection=next.direction;
     } //end if
 
     roomShape = getRoomShape(proceduralType);
@@ -221,27 +202,27 @@ export function ruins({map}){
 
     // If we are first starting out the generation, then we need to have a
     // starting direction to begin building. Randomly choose that direction
-    if(step===1) roomDirection = rf(4);
+    if(step===1) roomDirection = ['north','south','east','west'][Math.floor(Math.random()*4)];
 
     // Square and spherical rooms have different size metrics. Depending on
     // which type the room is, acquire the room size
     if(step>=1000){
       todo.length=0;
     }else{
-      const useWater = rf(100)<proceduralType.waterChance,
+      const useWater = Math.floor(Math.random()*100)<proceduralType.waterChance,
             drawPathway = step===1?false:true;
 
       let roomType;
 
       if(successfulRooms>=15&&useWater){
-        roomType=ROOMTYPES[rf(ROOMTYPES.length)];
+        roomType=roomTypes[Math.floor(Math.random()*roomTypes.length)];
       }else if(successfulRooms>=15&&!useWater){
-        roomType=ROOMTYPES_NONWATER[rf(ROOMTYPES_NONWATER.length)];
+        roomType=roomTypesNonWater[Math.floor(Math.random()*roomTypesNonWater.length)];
       } //end if
       if(roomShape==='spherical'){
         if(buildSphereRoom(cx,cy,roomSize,roomDirection,drawPathway,roomType)){
           successfulRooms++;
-        }else if(!rf(2)){
+        }else if(Math.random()<0.5){
           roomSize=2;
           roomShape='square'; //try a square room before moving on
         } //end if
@@ -253,81 +234,42 @@ export function ruins({map}){
       } //end if
     } //end if
     if(todo.length===0 && successfulRooms<15){
-      for(let i=0;i<size;i++){
-        for(let j=0;j<size;j++){
-          map.setEmpty({x: i,y: j});
-          successfulRooms=1;
-        } //end for
-      } //end for
+      map.sectors.flat().forEach(sector=> sector.setEmpty());
+      successfulRooms=1;
       step=0;
       cx = Math.floor(map.width/2);
       cy = Math.floor(map.height/2);
     } //end if
   }while(todo.length>0||step===0);
 
-  // Surround the map with walls
-  map.sectors.forEach((row,y)=>{
-
-    // eslint-disable-next-line complexity
-    row.forEach((sector,x)=>{
-      if(sector.isWalkable()){
-        if(map.isInbounds({x: x-1,y})&&map.isEmpty({x: x-1,y})){
-          map.setWall({x: x-1,y});
-        } //end if
-        if(map.isInbounds({x: x-1,y: y-1})&&map.isEmpty({x: x-1,y: y-1})){
-          map.setWall({x: x-1,y: y-1});
-        } //end if
-        if(map.isInbounds({x,y: y-1})&&map.isEmpty({x,y: y-1})){
-          map.setWall({x,y: y-1});
-        } //end if
-        if(map.isInbounds({x: x+1,y: y-1})&&map.isEmpty({x: x+1,y: y-1})){
-          map.setWall({x: x+1,y: y-1});
-        } //end if
-        if(map.isInbounds({x: x+1,y})&&map.isEmpty({x: x+1,y})){
-          map.setWall({x: x+1,y});
-        } //end if
-        if(map.isInbounds({x: x+1,y: y+1})&&map.isEmpty({x: x+1,y: y+1})){
-          map.setWall({x: x+1,y: y+1});
-        } //end if
-        if(map.isInbounds({x,y: y+1})&&map.isEmpty({x,y: y+1})){
-          map.setWall({x,y: y+1});
-        } //end if
-        if(map.isInbounds({x: x-1,y: y+1})&&map.isEmpty({x: x-1,y: y+1})){
-          map.setWall({x: x-1,y: y+1});
-        } //end if
-
-        // remove stranded floors caused by dispersion rooms
-        if(y<map.height-1&&x<map.width-1&&x>0&&y>0&&
-          !map.isWalkable({x: x-1,y})&&!map.isWalkable({x: x+1,y})&&
-          !map.isWalkable({x,y: y-1})&&!map.isWalkable({x,y: y+1})){
-          map.setWall({x,y});
-        } //end if
-      } //end if
-      if(sector.isDoor()){
-        let valid = false;
-
-        if(x>0&&x<map.width-1&&map.isWall({x: x-1,y})&&map.isWall({x: x+1,y})){
-          valid = true;
-        }else if(y>0&&y<map.height-1&&map.isWall({x,y: y-1})&&map.isWall({x,y: y+1})){
-          valid = true;
-        } //end if
-        if(!valid) sector.setFloor();
-      }
-    });
+  // remove stranded floors, wallifying and cleaning doors
+  map.sectors.flat().forEach(sector=>{
+    if(
+      (sector.isWalkable()||sector.isDoor())&&
+      !map.getNeighbors({
+        sector,orthogonal:true,
+        test:sector=>sector.isWalkable()||sector.isDoor()
+      }).length
+    ){
+      sector.setEmpty(); //removing stranded floors
+    }else if(
+      sector.isEmpty()&&
+      map.getNeighbors({
+        sector,orthogonal:true,
+        test:sector=>sector.isWalkable()||sector.isDoor()
+      }).length
+    ){
+      sector.setWall(); //wallifying
+    }else if(
+      sector.isDoor()&&
+      map.getNeighbors({
+        sector,test:sector=>sector.isWall()
+      }).length<2
+    ){
+      sector.setRemoved(); //removing erroneous doors
+    } //end if
   });
   return true;
-
-  // Check to see if a selection of area is empty
-  function checkSpaceEmpty(x,y,x2,y2){
-    for(let yi=y;yi<=y2;yi++){
-      for(let xi=x;xi<=x2;xi++){
-        if(xi<0||yi<0||xi>=map.width||yi>=map.height||!map.isEmpty({x: xi,y: yi})){
-          return false;
-        } //end for
-      } //end for
-    } //end for
-    return true;
-  } //end checkSpaceEmpty()
 
   //eslint-disable-next-line complexity
   function drawSpecialty(x,y,sx,sy,ex,ey,type){
@@ -336,17 +278,20 @@ export function ruins({map}){
 
     if(type==='dispersion'){
       map.setFloor({x,y});
-      if(ey-sy>2&&ex-sx>2&&(x===sx||x===ex||y===sy||y===ey)&&!rf(2)){
+      if(ey-sy>2&&ex-sx>2&&(x===sx||x===ex||y===sy||y===ey)&&Math.random()<0.5){
         map.setEmpty({x,y});
       } //end if
     }else if(type==='water islands'){
-      if(!rf(2)){ //50% chance
+      if(Math.random()<0.5){ //50% chance
         map.setFloor({x,y});
       }else{
         map.setWater({x,y});
       } //end if
     }else if(type==='water island walkways'){
-      const n=!rf(2),s=!rf(2),e=!rf(2),w=!rf(2),
+      const n=Math.random()<0.5,
+            s=Math.random()<0.5,
+            e=Math.random()<0.5,
+            w=Math.random()<0.5,
             na = x>=sx+halfX-1&&x<=ex-halfX&&y<=ey-halfY,
             sa = x>=sx+halfX-1&&x<=ex-halfX&&y>=sy+halfY-1,
             wa = x<=ex-halfX&&y>=sy+halfY-1&&y<=ey-halfY,
@@ -354,16 +299,16 @@ export function ruins({map}){
 
       if(n&&na||s&&sa||w&&wa||e&&ea){
         map.setFloor({x,y});
-        if(!rf(3))if(map.isWater({x: x-1,y: y-1}))map.setFloor({x: x-1,y: y-1});
-        if(!rf(3))if(map.isWater({x: x+1,y: y-1}))map.setFloor({x: x+1,y: y-1});
-        if(!rf(3))if(map.isWater({x: x-1,y: y+1}))map.setFloor({x: x-1,y: y+1});
-        if(!rf(3))if(map.isWater({x: x+1,y: y+1}))map.setFloor({x: x+1,y: y+1});
+        if(Math.random()<0.3)if(map.isWater({x: x-1,y: y-1}))map.setFloor({x: x-1,y: y-1});
+        if(Math.random()<0.3)if(map.isWater({x: x+1,y: y-1}))map.setFloor({x: x+1,y: y-1});
+        if(Math.random()<0.3)if(map.isWater({x: x-1,y: y+1}))map.setFloor({x: x-1,y: y+1});
+        if(Math.random()<0.3)if(map.isWater({x: x+1,y: y+1}))map.setFloor({x: x+1,y: y+1});
       }else{
         map.setWater({x,y});
       } //end if
     }else if(type==='water island'){
       if(x>=sx+halfX/2&&x<=ex-halfX/2&&y>=sy+halfY/2&&y<=ey-halfY/2){
-        const bend = !rf(2);
+        const bend = Math.random()<0.5;
 
         if(bend&&x===sx+(halfX/2)|0||bend&&x===ex-(halfX/2)|0||
            bend&&y===sy+(halfY/2)|0||bend&&y===ey-(halfY/2)|0){
@@ -376,7 +321,7 @@ export function ruins({map}){
       } //end if
     }else if(type==='water pool'){
       if(x>=sx+halfX/2&&x<=ex-halfX/2&&y>=sy+halfY/2&&y<=ey-halfY/2){
-        const bend = !rf(2);
+        const bend = Math.random()<0.5;
 
         if(bend&&x===sx+(halfX/2)|0||bend&&x===ex-(halfX/2)|0||
            bend&&y===sy+(halfY/2)|0||bend&&y===ey-(halfY/2)|0){
@@ -409,8 +354,11 @@ export function ruins({map}){
     let i,j,sx,sy,ex,ey;
 
     if(roomSize===5){
-      if(roomDirection===N && rn){
-        if(!checkSpaceEmpty(x-3,y-6,x+3,y))return false;
+      if(roomDirection==='north' && rn){
+        if(!map.isRect({
+          x1:x-3,y1:y-6,x2:x+3,y2:y,
+          test:sector=>sector.isEmpty()
+        })) return false;
         if(drawPathway) map.setDoor({x,y});
         sx = x-2; sy=y-5; ex = x+2; ey=y-1;
         /*eslint-disable */
@@ -424,11 +372,14 @@ export function ruins({map}){
         /*eslint-enable */
         map.setFloor({x,y: y-1}); //we enforce floors on either side of doors
         map.setFloor({x,y: y+1}); //we enforce floors on either side of doors
-        todo.push({rd: N,x,y: y-6});
-        todo.push({rd: W,x: x-3,y: y-3});
-        todo.push({rd: E,x: x+3,y: y-3});
-      }else if(roomDirection===E && re){
-        if(!checkSpaceEmpty(x,y-3,x+6,y+3))return false;
+        todo.push({direction: 'north',x,y: y-6});
+        todo.push({direction: 'west',x: x-3,y: y-3});
+        todo.push({direction: 'east',x: x+3,y: y-3});
+      }else if(roomDirection==='east' && re){
+        if(!map.isRect({
+          x1:x,y1:y-3,x2:x+6,y2:y+2,
+          test:sector=>sector.isEmpty()
+        })) return false;
         if(drawPathway) map.setDoor({x,y});
         sx = x+1; ex = x+5; sy = y-2; ey = y+2;
         /*eslint-disable */
@@ -442,11 +393,14 @@ export function ruins({map}){
         /*eslint-enable */
         map.setFloor({x: x-1,y}); //we enforce floors on either side of doors
         map.setFloor({x: x+1,y}); //we enforce floors on either side of doors
-        todo.push({rd: N,x: x+3,y: y-3});
-        todo.push({rd: E,x: x+6,y});
-        todo.push({rd: S,x: x+3,y: y+3});
-      }else if(roomDirection===S && rs){
-        if(!checkSpaceEmpty(x-3,y,x+3,y+6))return false;
+        todo.push({direction: 'north',x: x+3,y: y-3});
+        todo.push({direction: 'east',x: x+6,y});
+        todo.push({direction: 'south',x: x+3,y: y+3});
+      }else if(roomDirection==='south' && rs){
+        if(!map.isRect({
+          x1:x-3,y1:y,x2:x+3,y2:y+6,
+          test:sector=>sector.isEmpty()
+        })) return false;
         if(drawPathway) map.setDoor({x,y});
         sx = x-2; sy = y+1; ex = x+2; ey = y+5;
         /*eslint-disable */
@@ -460,11 +414,14 @@ export function ruins({map}){
         /*eslint-enable */
         map.setFloor({x,y: y-1}); //we enforce floors on either side of doors
         map.setFloor({x,y: y+1}); //we enforce floors on either side of doors
-        todo.push({rd: S,x,y: y+6});
-        todo.push({rd: W,x: x-3,y: y+3});
-        todo.push({rd: E,x: x+3,y: y+3});
-      }else if(roomDirection===W && rw){
-        if(!checkSpaceEmpty(x-6,y-3,x,y+3))return false;
+        todo.push({direction: 'south',x,y: y+6});
+        todo.push({direction: 'west',x: x-3,y: y+3});
+        todo.push({direction: 'east',x: x+3,y: y+3});
+      }else if(roomDirection==='west' && rw){
+        if(!map.isRect({
+          x1:x-6,y1:y-3,x2:x,y2:y+3,
+          test:sector=>sector.isEmpty()
+        })) return false;
         if(drawPathway) map.setDoor({x,y});
         sx = x-5; ex = x-1; sy = y-2; ey = y+2;
         /*eslint-disable */
@@ -478,14 +435,17 @@ export function ruins({map}){
         /*eslint-enable */
         map.setFloor({x: x-1,y}); //we enforce floors on either side of doors
         map.setFloor({x: x+1,y}); //we enforce floors on either side of doors
-        todo.push({rd: N,x: x-3,y: y-3});
-        todo.push({rd: W,x: x-6,y});
-        todo.push({rd: S,x: x-3,y: y+3});
+        todo.push({direction: 'north',x: x-3,y: y-3});
+        todo.push({direction: 'west',x: x-6,y});
+        todo.push({direction: 'south',x: x-3,y: y+3});
       } //end if
     }else if(roomSize===4){
-      if(roomDirection===N && rn){
+      if(roomDirection==='north' && rn){
         if(Math.floor(Math.random()*2)===0){
-          if(!checkSpaceEmpty(x-2,y-5,x+3,y))return false;
+          if(!map.isRect({
+            x1:x-2,y1:y-5,x2:x+3,y2:y,
+            test:sector=>sector.isEmpty()
+          })) return false;
           if(drawPathway) map.setDoor({x,y});
           sx = x-1; ex = x+2; sy = y-4; ey = y-1;
           /*eslint-disable */
@@ -498,23 +458,26 @@ export function ruins({map}){
           /*eslint-enable */
           map.setFloor({x,y: y-1}); //we enforce floors on either side of doors
           map.setFloor({x,y: y+1}); //we enforce floors on either side of doors
-          if(!rf(2)){ //50% chance
-            todo.push({rd: E,x: x+3,y: y-2});
+          if(Math.random()<0.5){ //50% chance
+            todo.push({direction: 'east',x: x+3,y: y-2});
           }else{
-            todo.push({rd: E,x: x+3,y: y-3});
+            todo.push({direction: 'east',x: x+3,y: y-3});
           } //end if
-          if(!rf(2)){ //50% chance
-            todo.push({rd: W,x: x-2,y: y-2});
+          if(Math.random()<0.5){ //50% chance
+            todo.push({direction: 'west',x: x-2,y: y-2});
           }else{
-            todo.push({rd: W,x: x-2,y: y-3});
+            todo.push({direction: 'west',x: x-2,y: y-3});
           } //end if
-          if(!rf(2)){ //50% chance
-            todo.push({rd: N,x,y: y-5});
+          if(Math.random()<0.5){ //50% chance
+            todo.push({direction: 'north',x,y: y-5});
           }else{
-            todo.push({rd: N,x: x+1,y: y-5});
+            todo.push({direction: 'north',x: x+1,y: y-5});
           } //end if
         }else{
-          if(!checkSpaceEmpty(x-3,y-5,x+2,y))return false;
+          if(!map.isRect({
+            x1:x-3,y1:y-5,x2:x+2,y2:y,
+            test:sector=>sector.isEmpty()
+          })) return false;
           if(drawPathway) map.setDoor({x,y});
           sx = x-2; sy = y-4; ex = x+1; ey= y-1;
           /*eslint-disable */
@@ -527,25 +490,28 @@ export function ruins({map}){
           /*eslint-enable */
           map.setFloor({x,y: y-1}); //we enforce floors on either side of doors
           map.setFloor({x,y: y+1}); //we enforce floors on either side of doors
-          if(!rf(2)){
-            todo.push({rd: E,x: x+2,y: y-2});
+          if(Math.random()<0.5){
+            todo.push({direction: 'east',x: x+2,y: y-2});
           }else{
-            todo.push({rd: E,x: x+2,y: y-3});
+            todo.push({direction: 'east',x: x+2,y: y-3});
           } //end if
-          if(!rf(2)){
-            todo.push({rd: W,x: x-3,y: y-2});
+          if(Math.random()<0.5){
+            todo.push({direction: 'west',x: x-3,y: y-2});
           }else{
-            todo.push({rd: W,x: x-3,y: y-3});
+            todo.push({direction: 'west',x: x-3,y: y-3});
           }
-          if(!rf(2)){
-            todo.push({rd: N,x: x-1,y: y-5});
+          if(Math.random()<0.5){
+            todo.push({direction: 'north',x: x-1,y: y-5});
           }else{
-            todo.push({rd: N,x,y: y-5});
+            todo.push({direction: 'north',x,y: y-5});
           } //end if
         } //end if
-      }else if(roomDirection===E && re){
-        if(!rf(2)){
-          if(!checkSpaceEmpty(x,y-2,x+5,y+3))return false;
+      }else if(roomDirection==='east' && re){
+        if(Math.random()<0.5){
+          if(!map.isRect({
+            x1:x,y1:y-2,x2:x+5,y2:y+3,
+            test:sector=>sector.isEmpty()
+          })) return false;
           if(drawPathway) map.setDoor({x,y});
           sx = x+1; ex = x+4; sy = y-1; ey = y+2;
           /*eslint-disable */
@@ -558,23 +524,26 @@ export function ruins({map}){
           /*eslint-enable */
           map.setFloor({x: x+1,y}); //we enforce floors on either side of doors
           map.setFloor({x: x-1,y}); //we enforce floors on either side of doors
-          if(!rf(2)){
-            todo.push({rd: N,x: x+2,y: y-2});
+          if(Math.random()<0.5){
+            todo.push({direction: 'north',x: x+2,y: y-2});
           }else{
-            todo.push({rd: N,x: x+3,y: y-2});
+            todo.push({direction: 'north',x: x+3,y: y-2});
           } //end if
-          if(!rf(2)){
-            todo.push({rd: E,x: x+5,y});
+          if(Math.random()<0.5){
+            todo.push({direction: 'east',x: x+5,y});
           }else{
-            todo.push({rd: E,x: x+5,y: y+1});
+            todo.push({direction: 'east',x: x+5,y: y+1});
           } //end if
-          if(!rf(2)){
-            todo.push({rd: S,x: x+2,y: y+3});
+          if(Math.random()<0.5){
+            todo.push({direction: 'south',x: x+2,y: y+3});
           }else{
-            todo.push({rd: S,x: x+3,y: y+3});
+            todo.push({direction: 'south',x: x+3,y: y+3});
           } //end if
         }else{
-          if(!checkSpaceEmpty(x,y-3,x+5,y+2))return false;
+          if(!map.isRect({
+            x1:x,y1:y-3,x2:x+5,y2:y+2,
+            test:sector=>sector.isEmpty()
+          })) return false;
           if(drawPathway) map.setDoor({x,y});
           sx = x+1; ex = x+4; sy = y-2; ey = y+1;
           /*eslint-disable */
@@ -587,25 +556,28 @@ export function ruins({map}){
           /*eslint-enable */
           map.setFloor({x: x+1,y}); //we enforce floors on either side of doors
           map.setFloor({x: x-1,y}); //we enforce floors on either side of doors
-          if(!rf(2)){
-            todo.push({rd: N,x: x+2,y: y-3});
+          if(Math.random()<0.5){
+            todo.push({direction: 'north',x: x+2,y: y-3});
           }else{
-            todo.push({rd: N,x: x+3,y: y-3});
+            todo.push({direction: 'north',x: x+3,y: y-3});
           } //end if
-          if(!rf(2)){
-            todo.push({rd: E,x: x+5,y: y-1});
+          if(Math.random()<0.5){
+            todo.push({direction: 'east',x: x+5,y: y-1});
           }else{
-            todo.push({rd: E,x: x+5,y});
+            todo.push({direction: 'east',x: x+5,y});
           } //end if
-          if(!rf(2)){
-            todo.push({rd: S,x: x+2,y: y+2});
+          if(Math.random()<0.5){
+            todo.push({direction: 'south',x: x+2,y: y+2});
           }else{
-            todo.push({rd: S,x: x+3,y: y+2});
+            todo.push({direction: 'south',x: x+3,y: y+2});
           } //end if
         } //end if
-      }else if(roomDirection===S && rs){
+      }else if(roomDirection==='south' && rs){
         if(Math.floor(Math.random()*2)===0){
-          if(!checkSpaceEmpty(x-2,y,x+3,y+5))return false;
+          if(!map.isRect({
+            x1:x-2,y1:y,x2:x+3,y2:y+5,
+            test:sector=>sector.isEmpty()
+          })) return false;
           if(drawPathway) map.setDoor({x,y});
           sx = x-1; sy = y+1; ex = x+2; ey = y+4;
           /*eslint-disable */
@@ -618,23 +590,26 @@ export function ruins({map}){
           /*eslint-enable */
           map.setFloor({x,y: y-1}); //we enforce floors on either side of doors
           map.setFloor({x,y: y+1}); //we enforce floors on either side of doors
-          if(!rf(2)){
-            todo.push({rd: E,x: x+3,y: y+2});
+          if(Math.random()<0.5){
+            todo.push({direction: 'east',x: x+3,y: y+2});
           }else{
-            todo.push({rd: E,x: x+3,y: y+3});
+            todo.push({direction: 'east',x: x+3,y: y+3});
           } //end if
-          if(!rf(2)){
-            todo.push({rd: W,x: x-2,y: y+2});
+          if(Math.random()<0.5){
+            todo.push({direction: 'west',x: x-2,y: y+2});
           }else{
-            todo.push({rd: W,x: x-2,y: y+3});
+            todo.push({direction: 'west',x: x-2,y: y+3});
           } //end if
-          if(!rf(2)){
-            todo.push({rd: S,x,y: y+5});
+          if(Math.random()<0.5){
+            todo.push({direction: 'south',x,y: y+5});
           }else{
-            todo.push({rd: S,x: x+1,y: y+5});
+            todo.push({direction: 'south',x: x+1,y: y+5});
           } //end if
         }else{
-          if(!checkSpaceEmpty(x-3,y,x+2,y+5))return false;
+          if(!map.isRect({
+            x1:x-3,y1:y,x2:x+2,y2:y+5,
+            test:sector=>sector.isEmpty()
+          })) return false;
           if(drawPathway) map.setDoor({x,y});
           sx = x-2; sy = y+1; ex = x+1; ey = y+4;
           /*eslint-disable */
@@ -647,25 +622,28 @@ export function ruins({map}){
           /*eslint-enable */
           map.setFloor({x,y: y-1}); //we enforce floors on either side of doors
           map.setFloor({x,y: y+1}); //we enforce floors on either side of doors
-          if(!rf(2)){
-            todo.push({rd: E,x: x+2,y: y+2});
+          if(Math.random()<0.5){
+            todo.push({direction: 'east',x: x+2,y: y+2});
           }else{
-            todo.push({rd: E,x: x+2,y: y+3});
+            todo.push({direction: 'east',x: x+2,y: y+3});
           } //end if
-          if(!rf(2)){
-            todo.push({rd: W,x: x-3,y: y+2});
+          if(Math.random()<0.5){
+            todo.push({direction: 'west',x: x-3,y: y+2});
           }else{
-            todo.push({rd: W,x: x-3,y: y+3});
+            todo.push({direction: 'west',x: x-3,y: y+3});
           } //end if
-          if(!rf(2)){
-            todo.push({rd: S,x: x-1,y: y+5});
+          if(Math.random()<0.5){
+            todo.push({direction: 'south',x: x-1,y: y+5});
           }else{
-            todo.push({rd: S,x,y: y+5});
+            todo.push({direction: 'south',x,y: y+5});
           } //end if
         } //end if
-      }else if(roomDirection===W && rw){
-        if(!rf(2)){
-          if(!checkSpaceEmpty(x-5,y-2,x,y+3))return false;
+      }else if(roomDirection==='west' && rw){
+        if(Math.random()<0.5){
+          if(!map.isRect({
+            x1:x-5,y1:y-2,x2:x,y2:y+3,
+            test:sector=>sector.isEmpty()
+          })) return false;
           if(drawPathway) map.setDoor({x,y});
           sx = x-4; sy = y-1; ex = x-1; ey = y+2;
           /*eslint-disable */
@@ -678,23 +656,26 @@ export function ruins({map}){
           /*eslint-enable */
           map.setFloor({x: x-1,y}); //we enforce floors on either side of doors
           map.setFloor({x: x+1,y}); //we enforce floors on either side of doors
-          if(!rf(2)){
-            todo.push({rd: N,x: x-2,y: y-2});
+          if(Math.random()<0.5){
+            todo.push({direction: 'north',x: x-2,y: y-2});
           }else{
-            todo.push({rd: N,x: x-3,y: y-2});
+            todo.push({direction: 'north',x: x-3,y: y-2});
           } //end if
-          if(!rf(2)){
-            todo.push({rd: W,x: x-5,y});
+          if(Math.random()<0.5){
+            todo.push({direction: 'west',x: x-5,y});
           }else{
-            todo.push({rd: W,x: x-5,y: y+1});
+            todo.push({direction: 'west',x: x-5,y: y+1});
           } //end if
-          if(!rf(2)){
-            todo.push({rd: S,x: x-2,y: y+3});
+          if(Math.random()<0.5){
+            todo.push({direction: 'south',x: x-2,y: y+3});
           }else{
-            todo.push({rd: S,x: x-3,y: y+3});
+            todo.push({direction: 'south',x: x-3,y: y+3});
           } //end if
         }else{
-          if(!checkSpaceEmpty(x-5,y-3,x,y+2))return false;
+          if(!map.isRect({
+            x1:x-5,y1:y-3,x2:x,y2:y+2,
+            test:sector=>sector.isEmpty()
+          })) return false;
           if(drawPathway) map.setDoor({x,y});
           sx = x-4; sy = y-2; ex = x-1; ey = y+1;
           /*eslint-disable */
@@ -707,26 +688,29 @@ export function ruins({map}){
           /*eslint-enable */
           map.setFloor({x: x-1,y}); //we enforce floors on either side of doors
           map.setFloor({x: x+1,y}); //we enforce floors on either side of doors
-          if(!rf(2)){
-            todo.push({rd: N,x: x-2,y: y-3});
+          if(Math.random()<0.5){
+            todo.push({direction: 'north',x: x-2,y: y-3});
           }else{
-            todo.push({rd: N,x: x-3,y: y-3});
+            todo.push({direction: 'north',x: x-3,y: y-3});
           } //end if
-          if(!rf(2)){
-            todo.push({rd: W,x: x-5,y: y-1});
+          if(Math.random()<0.5){
+            todo.push({direction: 'west',x: x-5,y: y-1});
           }else{
-            todo.push({rd: W,x: x-5,y});
+            todo.push({direction: 'west',x: x-5,y});
           } //end if
-          if(!rf(2)){
-            todo.push({rd: S,x: x-2,y: y+2});
+          if(Math.random()<0.5){
+            todo.push({direction: 'south',x: x-2,y: y+2});
           }else{
-            todo.push({rd: S,x: x-3,y: y+2});
+            todo.push({direction: 'south',x: x-3,y: y+2});
           } //end if
         } //end if
       } //end if
     }else if(roomSize===3){
-      if(roomDirection===N && rn){
-        if(!checkSpaceEmpty(x-2,y-4,x+2,y))return false;
+      if(roomDirection==='north' && rn){
+        if(!map.isRect({
+          x1:x-2,y1:y-4,x2:x+2,y2:y,
+          test:sector=>sector.isEmpty()
+        })) return false;
         if(drawPathway) map.setDoor({x,y});
         sx = x-1; ex = x+1; sy = y-3; ey = y-1;
         /*eslint-disable */
@@ -738,11 +722,14 @@ export function ruins({map}){
         /*eslint-enable */
         map.setFloor({x,y: y-1}); //we enforce floors on either side of doors
         map.setFloor({x,y: y+1}); //we enforce floors on either side of doors
-        todo.push({rd: E,x: x+2,y: y-2});
-        todo.push({rd: W,x: x-2,y: y-2});
-        todo.push({rd: N,x,y: y-4});
-      }else if(roomDirection===E && re){
-        if(!checkSpaceEmpty(x,y-2,x+4,y+2))return false;
+        todo.push({direction: 'east',x: x+2,y: y-2});
+        todo.push({direction: 'west',x: x-2,y: y-2});
+        todo.push({direction: 'north',x,y: y-4});
+      }else if(roomDirection==='east' && re){
+        if(!map.isRect({
+          x1:x,y1:y-2,x2:x+4,y2:y+2,
+          test:sector=>sector.isEmpty()
+        })) return false;
         if(drawPathway) map.setDoor({x,y});
         sx = x+1; ex = x+3; sy = y-1; ey = y+1;
         /*eslint-disable */
@@ -754,11 +741,14 @@ export function ruins({map}){
         /*eslint-enable */
         map.setFloor({x: x-1,y}); //we enforce floors on either side of doors
         map.setFloor({x: x+1,y}); //we enforce floors on either side of doors
-        todo.push({rd: E,x: x+4,y});
-        todo.push({rd: N,x: x+2,y: y-2});
-        todo.push({rd: S,x: x+2,y: y+2});
-      }else if(roomDirection===S && rs){
-        if(!checkSpaceEmpty(x-2,y,x+2,y+4))return false;
+        todo.push({direction: 'east',x: x+4,y});
+        todo.push({direction: 'north',x: x+2,y: y-2});
+        todo.push({direction: 'south',x: x+2,y: y+2});
+      }else if(roomDirection==='south' && rs){
+        if(!map.isRect({
+          x1:x-2,y1:y,x2:x+2,y2:y+4,
+          test:sector=>sector.isEmpty()
+        })) return false;
         if(drawPathway) map.setDoor({x,y});
         sx = x-1; ex = x+1; sy = y+1; ey = y+3;
         /*eslint-disable */
@@ -770,11 +760,14 @@ export function ruins({map}){
         /*eslint-enable */
         map.setFloor({x,y: y-1}); //we enforce floors on either side of doors
         map.setFloor({x,y: y+1}); //we enforce floors on either side of doors
-        todo.push({rd: E,x: x+2,y: y+2});
-        todo.push({rd: W,x: x-2,y: y+2});
-        todo.push({rd: S,x,y: y+4});
-      }else if(roomDirection===W && rw){
-        if(!checkSpaceEmpty(x-4,y-2,x,y+2))return false;
+        todo.push({direction: 'east',x: x+2,y: y+2});
+        todo.push({direction: 'west',x: x-2,y: y+2});
+        todo.push({direction: 'south',x,y: y+4});
+      }else if(roomDirection==='west' && rw){
+        if(!map.isRect({
+          x1:x-4,y1:y-2,x2:x,y2:y+2,
+          test:sector=>sector.isEmpty()
+        })) return false;
         if(drawPathway) map.setDoor({x,y});
         sx = x-3; sy = y-1; ex = x-1; ey = y+1;
         /*eslint-disable */
@@ -786,16 +779,19 @@ export function ruins({map}){
         /*eslint-enable */
         map.setFloor({x: x-1,y}); //we enforce floors on either side of doors
         map.setFloor({x: x+1,y}); //we enforce floors on either side of doors
-        todo.push({rd: W,x: x-4,y});
-        todo.push({rd: N,x: x-2,y: y-2});
-        todo.push({rd: S,x: x-2,y: y+2});
+        todo.push({direction: 'west',x: x-4,y});
+        todo.push({direction: 'north',x: x-2,y: y-2});
+        todo.push({direction: 'south',x: x-2,y: y+2});
       } //end if
-    }else if(roomDirection===N && rn){
+    }else if(roomDirection==='north' && rn){
       sx=x-Math.floor(r);
       ex=x+Math.ceil(r);
       sy=y-roomSize;
       ey=y;
-      if(!checkSpaceEmpty(sx-1,sy-1,ex+1,ey+1))return false;
+      if(!map.isRect({
+        x1:sx-1,y1:sy-1,x2:ex+1,y2:ey+1,
+        test:sector=>sector.isEmpty()
+      })) return false;
       if(drawPathway) map.setDoor({x,y});
       for(i=sx;i<ex;i++){
         for(j=sy;j<ey;j++){
@@ -818,14 +814,17 @@ export function ruins({map}){
       } //end for
       map.setFloor({x,y: y-1}); //we enforce floors on either side of doors
       map.setFloor({x,y: y+1}); //we enforce floors on either side of doors
-      todo.push({rd: N,x,y: y-roomSize-1});
-      todo.push({rd: W,x: x-Math.floor(r)+1,y: y-Math.floor(r)-1});
-      todo.push({rd: E,x: x+Math.floor(r)-1,y: y-Math.floor(r)-1});
-    }else if(roomDirection===E && re){
+      todo.push({direction: 'north',x,y: y-roomSize-1});
+      todo.push({direction: 'west',x: x-Math.floor(r)+1,y: y-Math.floor(r)-1});
+      todo.push({direction: 'east',x: x+Math.floor(r)-1,y: y-Math.floor(r)-1});
+    }else if(roomDirection==='east' && re){
       sx=x+1;ex=x+roomSize;
       sy=y-Math.floor(r);
       ey=y+Math.ceil(r);
-      if(!checkSpaceEmpty(sx-1,sy-1,ex+1,ey+1))return false;
+      if(!map.isRect({
+        x1:sx-1,y1:sy-1,x2:ex+1,y2:ey+1,
+        test:sector=>sector.isEmpty()
+      })) return false;
       if(drawPathway) map.setDoor({x,y});
       for(i=sx;i<=ex;i++){
         for(j=sy;j<ey;j++){
@@ -848,15 +847,18 @@ export function ruins({map}){
       } //end for
       map.setFloor({x: x+1,y}); //we enforce floors on either side of doors
       map.setFloor({x: x-1,y}); //we enforce floors on either side of doors
-      todo.push({rd: E,x: x+roomSize,y});
-      todo.push({rd: N,x: x+Math.ceil(r),y: y-(r)|0-1});
-      todo.push({rd: S,x: x+Math.ceil(r),y: y+Math.ceil(r)-1});
-    }else if(roomDirection===S && rs){
+      todo.push({direction: 'east',x: x+roomSize,y});
+      todo.push({direction: 'north',x: x+Math.ceil(r),y: y-(r)|0-1});
+      todo.push({direction: 'south',x: x+Math.ceil(r),y: y+Math.ceil(r)-1});
+    }else if(roomDirection==='south' && rs){
       sx=x-Math.floor(r);
       ex=x+Math.ceil(r);
       sy=y+1;
       ey=y+roomSize;
-      if(!checkSpaceEmpty(sx-1,sy-1,ex+1,ey+1))return false;
+      if(!map.isRect({
+        x1:sx-1,y1:sy-1,x2:ex+1,y2:ey+1,
+        test:sector=>sector.isEmpty()
+      })) return false;
       if(drawPathway) map.setDoor({x,y});
       for(i=sx;i<ex;i++){
         for(j=sy;j<=ey;j++){
@@ -879,15 +881,18 @@ export function ruins({map}){
       } //end for
       map.setFloor({x,y: y-1}); //we enforce floors on either side of doors
       map.setFloor({x,y: y+1}); //we enforce floors on either side of doors
-      todo.push({rd: S,x,y: y+roomSize+1});
-      todo.push({rd: W,x: x-(r)|0-1,y: y+Math.ceil(r)});
-      todo.push({rd: E,x: x+Math.ceil(r),y: y+Math.ceil(r)});
-    }else if(roomDirection===W && rw){
+      todo.push({direction: 'south',x,y: y+roomSize+1});
+      todo.push({direction: 'west',x: x-(r)|0-1,y: y+Math.ceil(r)});
+      todo.push({direction: 'east',x: x+Math.ceil(r),y: y+Math.ceil(r)});
+    }else if(roomDirection==='west' && rw){
       sx=x-roomSize;
       ex=x;
       sy=y-Math.floor(r);
       ey=y+Math.ceil(r);
-      if(!checkSpaceEmpty(sx-1,sy-1,ex+1,ey+1))return false;
+      if(!map.isRect({
+        x1:sx-1,y1:sy-1,x2:ex+1,y2:ey+1,
+        test:sector=>sector.isEmpty()
+      })) return false;
       if(drawPathway) map.setDoor({x,y});
       for(i=sx;i<ex;i++){
         for(j=sy;j<ey;j++){
@@ -910,9 +915,9 @@ export function ruins({map}){
       } //end for
       map.setFloor({x: x-1,y}); //we enforce floors on etiher side of doors
       map.setFloor({x: x+1,y}); //we enforce floors on either side of doors
-      todo.push({rd: W,x: x-roomSize-1,y});
-      todo.push({rd: N,x: x-(r)|0-1,y: y-(r)|0-1});
-      todo.push({rd: S,x: x-(r)|0-1,y: y+Math.ceil(r)});
+      todo.push({direction: 'west',x: x-roomSize-1,y});
+      todo.push({direction: 'north',x: x-(r)|0-1,y: y-(r)|0-1});
+      todo.push({direction: 'south',x: x-(r)|0-1,y: y+Math.ceil(r)});
     }else{
       return false; //went off side of map
     } //end if
@@ -933,12 +938,15 @@ export function ruins({map}){
 
     let i,j,sx,sy,ex,ey;
 
-    if(roomDirection===N && rn){
+    if(roomDirection==='north' && rn){
       sx=x-Math.floor(r);
       ex=x+Math.ceil(r);
       sy=y-roomSize;
       ey=y-1;
-      if(!checkSpaceEmpty(sx-1,sy-1,ex+1,ey+1))return false;
+      if(!map.isRect({
+        x1:sx-1,y1:sy-1,x2:ex+1,y2:ey+1,
+        test:sector=>sector.isEmpty()
+      })) return false;
       for(i=sx;i<=ex;i++){
         for(j=sy;j<=ey;j++){
           drawSpecialty(i,j,sx,sy,ex,ey,type);
@@ -947,15 +955,18 @@ export function ruins({map}){
       if(drawPathway) map.setDoor({x,y});
       map.setFloor({x,y: y-1}); //we enforce floors on either side of doors
       map.setFloor({x,y: y+1}); //we enforce floors on either side of doors
-      todo.push({rd: N,x,y: sy-1});
-      todo.push({rd: W,x: sx-1,y: sy+(r|0)});
-      todo.push({rd: E,x: ex+1,y: sy+(r|0)});
-    }else if(roomDirection===E && re){
+      todo.push({direction: 'north',x,y: sy-1});
+      todo.push({direction: 'west',x: sx-1,y: sy+(r|0)});
+      todo.push({direction: 'east',x: ex+1,y: sy+(r|0)});
+    }else if(roomDirection==='east' && re){
       sx=x+1;
       ex=x+roomSize;
       sy=y-Math.floor(r);
       ey=y+Math.ceil(r);
-      if(!checkSpaceEmpty(sx-1,sy-1,ex+1,ey+1))return false;
+      if(!map.isRect({
+        x1:sx-1,y1:sy-1,x2:ex+1,y2:ey+1,
+        test:sector=>sector.isEmpty()
+      })) return false;
       for(i=sx;i<=ex;i++){
         for(j=sy;j<=ey;j++){
           drawSpecialty(i,j,sx,sy,ex,ey,type);
@@ -964,15 +975,18 @@ export function ruins({map}){
       if(drawPathway) map.setDoor({x,y});
       map.setFloor({x: x-1,y}); //we enforce floors on either side of doors
       map.setFloor({x: x+1,y}); //we enforce floors on either side of doors
-      todo.push({rd: E,x: ex+1,y});
-      todo.push({rd: N,x: sx+(r|0),y: sy-1});
-      todo.push({rd: S,x: sx+(r|0),y: ey+1});
-    }else if(roomDirection===S && rs){
+      todo.push({direction: 'east',x: ex+1,y});
+      todo.push({direction: 'north',x: sx+(r|0),y: sy-1});
+      todo.push({direction: 'south',x: sx+(r|0),y: ey+1});
+    }else if(roomDirection==='south' && rs){
       sx=x-Math.floor(r);
       ex=x+Math.ceil(r);
       sy=y+1;
       ey=y+roomSize;
-      if(!checkSpaceEmpty(sx-1,sy-1,ex+1,ey+1))return false;
+      if(!map.isRect({
+        x1:sx-1,y1:sy-1,x2:ex+1,y2:ey+1,
+        test:sector=>sector.isEmpty()
+      })) return false;
       for(i=sx;i<=ex;i++){
         for(j=sy;j<=ey;j++){
           drawSpecialty(i,j,sx,sy,ex,ey,type);
@@ -981,15 +995,18 @@ export function ruins({map}){
       if(drawPathway) map.setDoor({x,y});
       map.setFloor({x,y: y-1}); //we enforce floors on either side of doors
       map.setFloor({x,y: y+1}); //we enforce floors on either side of doors
-      todo.push({rd: S,x,y: ey+1});
-      todo.push({rd: W,x: sx-1,y: sy+(r|0)});
-      todo.push({rd: E,x: ex+1,y: sy+(r|0)});
-    }else if(roomDirection===W && rw){
+      todo.push({direction: 'south',x,y: ey+1});
+      todo.push({direction: 'west',x: sx-1,y: sy+(r|0)});
+      todo.push({direction: 'east',x: ex+1,y: sy+(r|0)});
+    }else if(roomDirection==='west' && rw){
       sx=x-roomSize;
       ex=x-1;
       sy=y-Math.floor(r);
       ey=y+Math.ceil(r);
-      if(!checkSpaceEmpty(sx-1,sy-1,ex+1,ey+1))return false;
+      if(!map.isRect({
+        x1:sx-1,y1:sy-1,x2:ex+1,y2:ey+1,
+        test:sector=>sector.isEmpty()
+      })) return false;
       for(i=sx;i<=ex;i++){
         for(j=sy;j<=ey;j++){
           drawSpecialty(i,j,sx,sy,ex,ey,type);
@@ -998,9 +1015,9 @@ export function ruins({map}){
       if(drawPathway) map.setDoor({x,y});
       map.setFloor({x: x-1,y}); //we enforce floors on either side of doors
       map.setFloor({x: x+1,y}); //we enforce floors on either side of doors
-      todo.push({rd: W,x: sx-1,y});
-      todo.push({rd: N,x: sx+(r|0),y: sy-1});
-      todo.push({rd: S,x: sx+(r|0),y: ey+1});
+      todo.push({direction: 'west',x: sx-1,y});
+      todo.push({direction: 'north',x: sx+(r|0),y: sy-1});
+      todo.push({direction: 'south',x: sx+(r|0),y: ey+1});
     } //end if
     return true;
   } //end buildSquareRoom()

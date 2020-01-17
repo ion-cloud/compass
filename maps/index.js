@@ -62,7 +62,43 @@ export const maps = [
   {name: 'organized rooms', generator: organizedRooms},
   {name: 'patterned rooms', generator: patternedRooms},
   {name: 'ravine', generator: ravine},
-  {name: 'ruins', generator: ruins},
+  {name: 'ruins - random', generator: ruins},
+  {
+    name: 'ruins - standard crypt',
+    generator({map}){
+      ruins({map,templateName:'standard crypt'});
+    }
+  },
+  {
+    name: 'ruins - ancient crypt',
+    generator({map}){
+      ruins({map,templateName:'ancient crypt'});
+    }
+  },
+  {
+    name: 'ruins - crypt catacombs',
+    generator({map}){
+      ruins({map,templateName:'crypt catacombs'});
+    }
+  },
+  {
+    name: 'ruins - marshy dredge',
+    generator({map}){
+      ruins({map,templateName:'marshy dredge'});
+    }
+  },
+  {
+    name: 'ruins - wide passages',
+    generator({map}){
+      ruins({map,templateName:'wide passages'});
+    }
+  },
+  {
+    name: 'ruins - deep passages',
+    generator({map}){
+      ruins({map,templateName:'deep passages'});
+    }
+  },
   {name: 'strath', generator: strath},
   {name: 'tepui', generator: tepui},
   {name: 'turlough', generator: turlough},
