@@ -1,3 +1,4 @@
+import {Room} from './Room';
 import {Noise} from './Noise';
 import {Heap} from './Heap';
 
@@ -9,6 +10,7 @@ export class Map{
     this.height = height;
     this.noise = noise;
     this.sectors = sectors;
+    this.rooms = [];
   }
   getRefmap(){
     return Object.assign({},this.refmap);
@@ -19,6 +21,9 @@ export class Map{
       [array[i], array[j]] = [array[j], array[i]];
     } //end for
     return array;
+  }
+  addRoom({x1=0,y1=0,x2=0,y2=0,type}={}){
+    this.rooms.push(new Room({map:this,x1,y1,x2,y2,type}));
   }
   clone(){
     return new Map({
