@@ -32,6 +32,28 @@ export function ruins({
   options={
     rooms: [
       {
+        name: 'pillar square',
+        weight: 8,
+        sizes: [
+          {size: 11, weight: 4},{size: 10, weight: 8},
+          {size: 9, weight: 12},{size: 8, weight: 16},
+          {size: 7, weight: 20},{size: 6, weight: 30},
+          {size: 5, weight: 50},{size: 4, weight: 70},
+          {size: 3, weight: 100}
+        ]
+      },
+      {
+        name: 'pillar circle',
+        weight: 8,
+        sizes: [
+          {size: 11, weight: 4},{size: 10, weight: 8},
+          {size: 9, weight: 12},{size: 8, weight: 16},
+          {size: 7, weight: 20},{size: 6, weight: 30},
+          {size: 5, weight: 50},{size: 4, weight: 70},
+          {size: 3, weight: 100}
+        ]
+      },
+      {
         name: 'normal square',
         weight: 8,
         sizes: [
@@ -139,7 +161,6 @@ export function ruins({
       if(roomSize>2&&successfulRooms>1){
         map.setDoor({x,y});
       }else if(successfulRooms>1){
-        console.log(roomSize);
         map.setFloor({x,y});
       } //end if
       if(roomDirection!=='south'&&exits.north.length){

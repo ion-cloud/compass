@@ -15,7 +15,7 @@
     "url": "https://github.com/NathanielInman/demo/issues"
   },
   "scripts": {
-    "prestart": "rm -rf ./parcel",
+    "prestart": "rm -rf .parcel",
     "start": "NODE_ENV=development ./node_modules/parcel/bin/cli.js ./src/index.pug -d dist --cache-dir .parcel"
   },
   "devDependencies": {

@@ -72,7 +72,15 @@ export const maps = [
           rooms: [
             {
               name: 'normal square',
-              weight: 16,
+              weight: 8,
+              sizes: [
+                {size: 5, weight: 10},{size: 4, weight: 35},
+                {size: 3, weight: 70},{size: 2, weight: 30}
+              ]
+            },
+            {
+              name: 'pillar square',
+              weight: 8,
               sizes: [
                 {size: 5, weight: 10},{size: 4, weight: 35},
                 {size: 3, weight: 70},{size: 2, weight: 30}
@@ -92,6 +100,14 @@ export const maps = [
               sizes: [
                 {size: 5, weight: 10},{size: 4, weight: 35},
                 {size: 3, weight: 70},{size: 2, weight: 100}
+              ]
+            },
+            {
+              name: 'pillar circle',
+              weight: 10,
+              sizes: [
+                {size: 9, weight: 4},{size: 8, weight: 8},
+                {size: 7, weight: 12},{size: 6, weight: 7}
               ]
             },
             {
@@ -144,6 +160,13 @@ export const maps = [
               sizes: [
                 {size: 5, weight: 10},{size: 4, weight: 35},
                 {size: 3, weight: 70},{size: 2, weight: 100}
+              ]
+            },
+            {
+              name: 'pillar square',
+              weight: 2,
+              sizes: [
+                {size: 6, weight: 10},{size: 5, weight: 7},
               ]
             },
             {
@@ -233,6 +256,14 @@ export const maps = [
               ]
             },
             {
+              name: 'pillar square',
+              weight: 1,
+              sizes: [
+                {size: 9, weight: 2},{size: 8, weight: 5},
+                {size: 7, weight: 8},{size: 6, weight: 10}
+              ]
+            },
+            {
               name: 'marsh square',
               weight: 1,
               sizes: [
@@ -281,6 +312,16 @@ export const maps = [
               weight: 2,
               sizes: [
                 {size: 2, weight: 100}
+              ]
+            },
+            {
+              name: 'pillar circle',
+              weight: 1,
+              sizes: [
+                {size: 15, weight: 2},{size: 14, weight: 4},
+                {size: 13, weight: 6},{size: 12, weight: 8},
+                {size: 11, weight: 10},{size: 10, weight: 12},
+                {size: 9, weight: 14},{size: 8, weight: 16}
               ]
             },
             {
