@@ -18,7 +18,7 @@ if(!easel.activated){
 }else{
   noscript.style.display='none';
   const map = new Map(50,50),
-        {generator} = maps.find(map=> map.name==='ruins - deep passages');
+        {generator} = maps.find(map=> map.name==='ruins');
 
   for(let y=0;y<map.height;y++){
     map.sectors[y]=[];
