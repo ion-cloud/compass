@@ -97,6 +97,14 @@ export class Sector{
   setWallSpecial(){
     this.category = 'wallSpecial';
   }
+  isObstruction(){
+    let obstruction = true;
+
+    if(this.isFloor()) obstruction = false;
+    if(this.isFloorSpecial()) obstruction = false;
+    if(this.isWater()) obstruction = false;
+    return obstruction;
+  }
   isWalkable(){
     let walkable = false;
 

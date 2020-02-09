@@ -204,6 +204,15 @@ export class Map{
     if(direction) ({x,y} = this.constructor.translate({x,y,direction}));
     this.getSector({x,y}).setRemoved();
   }
+
+  // isWalkable may change based on door states and other factors, isObstruction
+  // will never change and includes windows, walls etc.
+  isObstruction({x=0,y=0}={},direction){
+    if(direction) ({x,y} = this.constructor.translate({x,y,direction}));
+    return this.getSector({x,y}).isObstruction();
+  }
+
+  // may change based on door state
   isWalkable({x=0,y=0}={},direction){
     if(direction) ({x,y} = this.constructor.translate({x,y,direction}));
     return this.getSector({x,y}).isWalkable();
