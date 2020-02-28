@@ -516,6 +516,120 @@ export class Map{
     return null;
   }
 
+  // compute visibility for a 180-degree arc
+  // this uses restricted shadowcasting algorithm
+  computeRestrictedFOV({
+    originX,originY,radius,direction='north',
+    isTransparent=()=>{},setVisible=()=>{}
+  }={}){
+    const directions = {
+            north: 0, northeast: 1, east: 2, southeast: 3, south: 4,
+            southwest: 5, west: 6, northwest: 7
+          },
+          octants = [
+            [-1, 0, 0, 1],
+            [0, -1, 1, 0],
+            [0, -1, -1, 0],
+            [-1, 0, 0, -1],
+            [1, 0, 0, -1],
+            [0, 1, -1, 0],
+            [0, 1, 1, 0],
+            [1, 0, 0, 1]
+          ],
+          octant1 = (directions[direction]-2+8)%8,
+          octant2 = (directions[direction]-1+8)%8,
+          octant3 = (directions[direction]+8)%8,
+          octant4 = (directions[direction]+1+8)%8;
+
+    setVisible({x:originX,y:originY});
+    this.computeRestrictedFOVOctant({
+      originX,originY,radius,isTransparent,setVisible,
+      octant:octants[(directions[direction]-2+8)%8]
+    });
+    this.computeRestrictedFOVOctant({
+      originX,originY,radius,isTransparent,setVisible,
+      octant:octants[(directions[direction]-1+8)%8]
+    });
+    this.computeRestrictedFOVOctant({
+      originX,originY,radius,isTransparent,setVisible,
+      octant:octants[(directions[direction]+8)%8]
+    });
+    this.computeRestrictedFOVOctant({
+      originX,originY,radius,isTransparent,setVisible,
+      octant:octants[(directions[direction]+1+8)%8]
+    });
+  }
+
+  computeRestrictedFOVOctant({
+    originX,originY,radius,isTransparent,setVisible,octant,
+    row=1,visSlopeStart=1.0,visSlopeEnd=0.0
+  }={}){
+    const [xx,xy,yx,yy] = octant;
+
+    if(visSlopeStart<visSlopeEnd) return;
+    for (let i = row; i <= radius; i++) {
+      let dx = -i - 1,
+          dy = -i,
+          blocked = false,
+          newStart = 0;
+
+      //'Row' could be column, names here assume octant 0 and would be flipped for half the octants
+      while (dx <= 0) {
+        dx += 1;
+
+        //Translate from relative coordinates to map coordinates
+        let mapX = originX + dx * xx + dy * xy,
+            mapY = originY + dx * yx + dy * yy;
+
+        //Range of the row
+        let slopeStart = (dx - 0.5) / (dy + 0.5),
+            slopeEnd = (dx + 0.5) / (dy - 0.5);
+
+        //Ignore if not yet at left edge of Octant
+        if (slopeEnd > visSlopeStart) continue;
+
+        //Done if past right edge
+        if (slopeStart < visSlopeEnd) break;
+
+        //If it's in range, it's visible
+        if (
+          (dx * dx + dy * dy) < (radius * radius) &&
+          this.isInbounds({x:mapX,y:mapY})
+        ) setVisible({x:mapX,y:mapY});
+        if (!blocked) {
+
+          //If tile is a blocking tile, cast around it
+          if (
+            !this.isInbounds({x:mapX,y:mapY}) ||
+            !isTransparent({x:mapX,y:mapY}) && i < radius
+          ) {
+            blocked = true;
+            this.computeRestrictedFOVOctant({
+              originX,originY,radius,isTransparent,setVisible,octant,
+              row:row+1,visSlopeStart,visSlopeEnd:slopeStart
+            })
+            newStart = slopeEnd;
+          }
+        } else {
+
+          //Keep narrowing if scanning across a block
+          if (
+            !this.isInbounds({x:mapX,y:mapY})||
+            !isTransparent({x:mapX,y:mapY})
+          ) {
+            newStart = slopeEnd;
+            continue;
+          }
+
+          //Block has ended
+          blocked = false;
+          visSlopeStart = newStart;
+        } //end if
+      } //end while
+      if (blocked) break;
+    } //end for
+  } //end computeRestrictedFOVOctant()
+
   // Use Mingos Restricted Precise Angle Shadowcasting to
   // set new visible sectors
   computeFOV({
@@ -919,5 +1033,6 @@ export class Map{
     });
   }
 }
+
 
 
