@@ -530,12 +530,12 @@ export class Map{
   // ray-casting permissive
   computeDirectionalFOV({
     x,y,
-    facing='east',
+    direction='east',
     fieldOfViewDegrees=180,
     fieldOfViewRadians=fieldOfViewDegrees*Math.PI/180,
-    distance=8,
-    accuracy=0.95, //higher accuracy required for higher distance
-    isTransparent=({x,y})=> this.isFloor({x,y}),
+    radius=8,
+    accuracy=0.95, //higher accuracy required for higher radius
+    isTransparent=({x,y})=> this.map.isWalkable({x,y})||this.map.isEmpty({x,y}),
     setTransparent=({x,y,state})=> state.visible.push({x,y}),
     isTranslucent=({x,y})=> this.isWindow({x,y}),
     setTranslucent=({x,y,state})=>{
@@ -545,7 +545,8 @@ export class Map{
         state.firstWindow = true;
       } //end if
     },
-    isOpaque=({x,y,state})=> this.isWall({x,y})||state.secondWindow
+    isOpaque=({x,y,state})=> this.isWall({x,y})||state.secondWindow,
+    setVisible=()=>{}
   }={}){
     const quadrants = {
       north: [{x2: -1, y2: -1},{x2: 1, y2: -1}],
@@ -554,15 +555,15 @@ export class Map{
       west: [{x2: -1, y2: -1},{x2: -1, y2: 1}]
     };
 
-    quadrants[facing].forEach(quad=>{
+    quadrants[direction].forEach(quad=>{
       for(
         let sigma = fieldOfViewRadians/2;
         sigma > 0;
         sigma -= 0.05
       ){
         const [x1,y1] = [x,y],
-              x2 = Math.round(x1 + quad.x2 * distance * Math.cos(sigma)),
-              y2 = Math.round(y1 + quad.y2 * distance * Math.sin(sigma));
+              x2 = Math.round(x1 + quad.x2 * radius * Math.cos(sigma)),
+              y2 = Math.round(y1 + quad.y2 * radius * Math.sin(sigma));
 
         this.bresenhamsLine({
           x1,y1,x2,y2,
@@ -572,6 +573,7 @@ export class Map{
           onTest: ({x,y,state})=>{
             if(isTransparent({x,y,state})) setTransparent({x,y,state});
             if(isTranslucent({x,y,state})) setTranslucent({x,y,state});
+            setVisible({x,y});
             if(isOpaque({x,y,state})) return false;
             return true;
           },
@@ -795,6 +797,7 @@ export class Map{
     });
   }
 }
+
 
 
 
