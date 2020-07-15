@@ -315,27 +315,38 @@ export class Map{
 
   // uses bresenhams line algorithm to acquire an array of points
   // inclusively between A(x1,y1) and B(x2,y2)
-  bresenhamsLine({x1=0,y1=0,x2=0,y2=0}={}){
-    const dx = Math.abs(x2-x1), dy = Math.abs(y2-y1),
-          sx = x1<x2?1:-1, sy = y1<y2?1:-1,
-          path = [this.getSector({x: x1,y: y1})];
+  bresenhamsLine({
+    x1=0,y1=0,x2=0,y2=0,state={},
+    onStart=()=>{},
+    onTest=()=>{return true;},
+    onSuccess=()=>{},
+    onFailure=()=>{},
+    onFinish=()=>{},
+  }={}){
+    const dx = Math.abs(x2 - x1),
+          dy = Math.abs(y2 - y1),
+          sx = x1 < x2 ? 1 : -1,
+          sy = y1 < y2 ? 1 : -1;
 
-    let err = dx-dy, err2; //difference and difference*2
+    let [x,y] = [x1,y1],
+        error = dx - dy,
+        error2;
 
-    if(!this.isInbounds({x: x1,y: y1})||!this.isInbounds({x: x2,y: y2})){
-      return null;
-    } //end if
-    while(!(x1===x2&&y1===y2)){
-      err2 = 2*err;
-      if(err2>-dy){
-        err-=dy; x1+=sx; //eslint-disable-line no-param-reassign
+    onStart({x,y,x1,y1,x2,y2,state});
+    do{
+      if(onTest({x,y,x1,y1,x2,y2,state})){
+        onSuccess({x,y,x1,y1,x2,y2,state});
+      }else{
+        onFailure({x,y,x1,y1,x2,y2,state});
+        state.failing = true;
       } //end if
-      if(err2<dx){
-        err+=dx; y1+=sy; //eslint-disable-line no-param-reassign
-      } //end if
-      path.push(this.getSector({x: x1,y: y1}));
-    } //end while()
-    return path;
+      if(x==x2&&y==y2) state.failing = true;
+      error2 = 2 * error;
+      if(error2 > -dy){ error -= dy; x += sx; }
+      if(error2 < dx){ error += dx; y += sy; }
+    }while(!state.failing)
+    onFinish({x,y,x1,y1,x2,y2,state});
+    return state;
   }
 
   // return the neighbors of a given sector that pass the `test` function.
@@ -516,307 +527,58 @@ export class Map{
     return null;
   }
 
-  // compute visibility for a 180-degree arc
-  // this uses restricted shadowcasting algorithm
-  computeRestrictedFOV({
-    originX,originY,radius,direction='north',
-    isTransparent=()=>{},setVisible=()=>{}
+  // ray-casting permissive
+  computeDirectionalFOV({
+    x,y,
+    facing='east',
+    fieldOfViewDegrees=180,
+    fieldOfViewRadians=fieldOfViewDegrees*Math.PI/180,
+    distance=8,
+    accuracy=0.95, //higher accuracy required for higher distance
+    isTransparent=({x,y})=> this.isFloor({x,y}),
+    setTransparent=({x,y,state})=> state.visible.push({x,y}),
+    isTranslucent=({x,y})=> this.isWindow({x,y}),
+    setTranslucent=({x,y,state})=>{
+      if(state.firstWindow){
+        state.secondWindow = true;
+      } else {
+        state.firstWindow = true;
+      } //end if
+    },
+    isOpaque=({x,y,state})=> this.isWall({x,y})||state.secondWindow
   }={}){
-    const directions = {
-            north: 0, northeast: 1, east: 2, southeast: 3, south: 4,
-            southwest: 5, west: 6, northwest: 7
+    const quadrants = {
+      north: [{x2: -1, y2: -1},{x2: 1, y2: -1}],
+      east: [{x2: 1, y2: -1},{x2: 1, y2: 1}],
+      south: [{x2: -1, y2: 1},{x2: 1, y2: 1}],
+      west: [{x2: -1, y2: -1},{x2: -1, y2: 1}]
+    };
+
+    quadrants[facing].forEach(quad=>{
+      for(
+        let sigma = fieldOfViewRadians/2;
+        sigma > 0;
+        sigma -= 0.05
+      ){
+        const [x1,y1] = [x,y],
+              x2 = Math.round(x1 + quad.x2 * distance * Math.cos(sigma)),
+              y2 = Math.round(y1 + quad.y2 * distance * Math.sin(sigma));
+
+        this.bresenhamsLine({
+          x1,y1,x2,y2,
+          onStart: ({state})=>{
+            state.visible = [];
           },
-          octants = [
-            [-1, 0, 0, 1],
-            [0, -1, 1, 0],
-            [0, -1, -1, 0],
-            [-1, 0, 0, -1],
-            [1, 0, 0, -1],
-            [0, 1, -1, 0],
-            [0, 1, 1, 0],
-            [1, 0, 0, 1]
-          ],
-          octant1 = (directions[direction]-2+8)%8,
-          octant2 = (directions[direction]-1+8)%8,
-          octant3 = (directions[direction]+8)%8,
-          octant4 = (directions[direction]+1+8)%8;
-
-    setVisible({x:originX,y:originY});
-    this.computeRestrictedFOVOctant({
-      originX,originY,radius,isTransparent,setVisible,
-      octant:octants[(directions[direction]-2+8)%8]
-    });
-    this.computeRestrictedFOVOctant({
-      originX,originY,radius,isTransparent,setVisible,
-      octant:octants[(directions[direction]-1+8)%8]
-    });
-    this.computeRestrictedFOVOctant({
-      originX,originY,radius,isTransparent,setVisible,
-      octant:octants[(directions[direction]+8)%8]
-    });
-    this.computeRestrictedFOVOctant({
-      originX,originY,radius,isTransparent,setVisible,
-      octant:octants[(directions[direction]+1+8)%8]
-    });
-  }
-
-  computeRestrictedFOVOctant({
-    originX,originY,radius,isTransparent,setVisible,octant,
-    row=1,visSlopeStart=1.0,visSlopeEnd=0.0
-  }={}){
-    const [xx,xy,yx,yy] = octant;
-
-    if(visSlopeStart<visSlopeEnd) return;
-    for (let i = row; i <= radius; i++) {
-      let dx = -i - 1,
-          dy = -i,
-          blocked = false,
-          newStart = 0;
-
-      //'Row' could be column, names here assume octant 0 and would be flipped for half the octants
-      while (dx <= 0) {
-        dx += 1;
-
-        //Translate from relative coordinates to map coordinates
-        let mapX = originX + dx * xx + dy * xy,
-            mapY = originY + dx * yx + dy * yy;
-
-        //Range of the row
-        let slopeStart = (dx - 0.5) / (dy + 0.5),
-            slopeEnd = (dx + 0.5) / (dy - 0.5);
-
-        //Ignore if not yet at left edge of Octant
-        if (slopeEnd > visSlopeStart) continue;
-
-        //Done if past right edge
-        if (slopeStart < visSlopeEnd) break;
-
-        //If it's in range, it's visible
-        if (
-          (dx * dx + dy * dy) < (radius * radius) &&
-          this.isInbounds({x:mapX,y:mapY})
-        ) setVisible({x:mapX,y:mapY});
-        if (!blocked) {
-
-          //If tile is a blocking tile, cast around it
-          if (
-            !this.isInbounds({x:mapX,y:mapY}) ||
-            !isTransparent({x:mapX,y:mapY}) && i < radius
-          ) {
-            blocked = true;
-            this.computeRestrictedFOVOctant({
-              originX,originY,radius,isTransparent,setVisible,octant,
-              row:row+1,visSlopeStart,visSlopeEnd:slopeStart
-            })
-            newStart = slopeEnd;
-          }
-        } else {
-
-          //Keep narrowing if scanning across a block
-          if (
-            !this.isInbounds({x:mapX,y:mapY})||
-            !isTransparent({x:mapX,y:mapY})
-          ) {
-            newStart = slopeEnd;
-            continue;
-          }
-
-          //Block has ended
-          blocked = false;
-          visSlopeStart = newStart;
-        } //end if
-      } //end while
-      if (blocked) break;
-    } //end for
-  } //end computeRestrictedFOVOctant()
-
-  // Use Mingos Restricted Precise Angle Shadowcasting to
-  // set new visible sectors
-  computeFOV({
-    originX,originY,radius,
-    isTransparent=()=>{},isVisible=()=>{},setVisible=()=>{}
-  }={}){
-    setVisible({x:originX,y:originY});
-
-    // southeast
-    this.computeFOVOctantY({
-      originX,originY,radius,deltaX:1,deltaY:1,
-      isTransparent,isVisible,setVisible
-    });
-    this.computeFOVOctantX({
-      originX,originY,radius,deltaX:1,deltaY:1,
-      isTransparent,isVisible,setVisible
-    });
-
-    // northeast
-    this.computeFOVOctantY({
-      originX,originY,radius,deltaX:1,deltaY:-1,
-      isTransparent,isVisible,setVisible
-    });
-    this.computeFOVOctantX({
-      originX,originY,radius,deltaX:1,deltaY:-1,
-      isTransparent,isVisible,setVisible
-    });
-
-    // southwest
-    this.computeFOVOctantY({
-      originX,originY,radius,deltaX:-1,deltaY:1,
-      isTransparent,isVisible,setVisible
-    });
-    this.computeFOVOctantX({
-      originX,originY,radius,deltaX:-1,deltaY:1,
-      isTransparent,isVisible,setVisible
-    });
-
-    // northwest
-    this.computeFOVOctantY({
-      originX,originY,radius,deltaX:-1,deltaY:-1,
-      isTransparent,isVisible,setVisible
-    });
-    this.computeFOVOctantX({
-      originX,originY,radius,deltaX:-1,deltaY:-1,
-      isTransparent,isVisible,setVisible
-    });
-  }
-  computeFOVOctantY({
-    originX,originY,deltaX,deltaY,radius,
-    isTransparent,isVisible,setVisible
-  }){
-    const minX = Math.max(0,originX-radius),
-          minY = Math.max(0,originY-radius),
-          maxX = Math.min(this.width-1,originX+radius),
-          maxY = Math.min(this.height-1,originY+radius),
-          startSlopes = [],
-          endSlopes = [];
-
-    for(
-      let y=originY+deltaY,
-      iteration=1,totalObstacles=0,obstaclesInLastLine=0,
-      minSlope=0;
-      y>=minY&&y<=maxY;
-      y+=deltaY,obstaclesInLastLine=totalObstacles,++iteration
-    ){
-      const halfSlope = 0.5/iteration;
-
-      for(
-        let processedCell = Math.floor(minSlope*iteration+0.5),
-        x=originX+(processedCell*deltaX),
-        previousEndSlope=-1,
-        visible,extended,centreSlope,endSlope;
-        processedCell<=iteration&&x>=minX&&x<=maxX;
-        x+=deltaX,++processedCell,previousEndSlope=endSlope
-      ){
-        let visible=true,extended=false,
-            centreSlope=processedCell/iteration,
-            startSlope=previousEndSlope;
-
-        endSlope=centreSlope+halfSlope;
-        if(obstaclesInLastLine>0){
-          if(
-            !(isVisible({x,y:y-deltaY})&&isTransparent({x,y:y-deltaY}))&&
-            !(isVisible({x:x-deltaX,y:y-deltaY})&&isTransparent({x:x-deltaX,y:y-deltaY}))
-          ){
-            visible = false;
-          }else{
-            for(let idx=0;idx<obstaclesInLastLine&&visible;++idx){
-              if(startSlope>endSlopes[idx]||endSlope<startSlopes[idx]) continue;
-              if(isTransparent({x,y})){
-                if(centreSlope>startSlopes[idx]&&centreSlope<endSlopes[idx]){
-                  visible=false;
-                  break;
-                } //end if
-              }else if(startSlope>=startSlopes[idx]&&endSlope<=endSlopes[idx]){
-                visible=false;
-                break;
-              }else{
-                startSlopes[idx]=Math.min(startSlopes[idx],startSlope);
-                endSlopes[idx]=Math.max(endSlopes[idx],endSlope);
-                extended=true;
-              } //end if
-            } //end for
-          } //end if
-        } //end if
-        if(visible){
-          setVisible({x,y});
-          if(!isTransparent({x,y})&&minSlope>=startSlope){
-            minSlope = endSlope;
-          }else if(!isTransparent({x,y})&&!extended){
-            startSlopes[totalObstacles] = startSlope;
-            endSlopes[totalObstacles++] = endSlope;
-          } //end if
-        } //end if
+          onTest: ({x,y,state})=>{
+            if(isTransparent({x,y,state})) setTransparent({x,y,state});
+            if(isTranslucent({x,y,state})) setTranslucent({x,y,state});
+            if(isOpaque({x,y,state})) return false;
+            return true;
+          },
+          onSuccess: ({x,y,state})=> state.visible.push({x,y})
+        });
       } //end for
-    } //end for
-  }
-  computeFOVOctantX({
-    originX,originY,deltaX,deltaY,radius,
-    isTransparent,isVisible,setVisible
-  }){
-    const minX = Math.max(0,originX-radius),
-          minY = Math.max(0,originY-radius),
-          maxX = Math.min(this.width-1,originX+radius),
-          maxY = Math.min(this.height-1,originY+radius),
-          startSlopes = [],
-          endSlopes = [];
-
-    for(
-      let x=originX+deltaX,
-      iteration=1,totalObstacles=0,obstaclesInLastLine=0,
-      minSlope=0;
-      x>=minX&&x<=maxX;
-      x+=deltaX,obstaclesInLastLine=totalObstacles,++iteration
-    ){
-      const halfSlope = 0.5/iteration;
-
-      for(
-        let processedCell = Math.floor(minSlope*iteration+0.5),
-        y=originY+(processedCell*deltaY),
-        previousEndSlope=-1,
-        visible,extended,centreSlope,endSlope;
-        processedCell<=iteration&&y>=minY&&y<=maxY;
-        y+=deltaY,++processedCell,previousEndSlope=endSlope
-      ){
-        let visible=true,extended=false,
-            centreSlope=processedCell/iteration,
-            startSlope=previousEndSlope;
-
-        endSlope=centreSlope+halfSlope;
-        if(obstaclesInLastLine>0){
-          if(
-            !(isVisible({x:x-deltaX,y})&&isTransparent({x:x-deltaX,y}))&&
-            !(isVisible({x:x-deltaX,y:y-deltaY})&&isTransparent({x:x-deltaX,y:y-deltaY}))
-          ){
-            visible = false;
-          }else{
-            for(let idx=0;idx<obstaclesInLastLine&&visible;++idx){
-              if(startSlope>endSlopes[idx]||endSlope<startSlopes[idx]) continue;
-              if(isTransparent({x,y})){
-                if(centreSlope>startSlopes[idx]&&centreSlope<endSlopes[idx]){
-                  visible=false;
-                  break;
-                } //end if
-              }else if(startSlope>=startSlopes[idx]&&endSlope<=endSlopes[idx]){
-                visible=false;
-                break;
-              }else{
-                startSlopes[idx]=Math.min(startSlopes[idx],startSlope);
-                endSlopes[idx]=Math.max(endSlopes[idx],endSlope);
-                extended=true;
-              } //end if
-            } //end for
-          } //end if
-        } //end if
-        if(visible){
-          setVisible({x,y});
-          if(!isTransparent({x,y})&&minSlope>=startSlope){
-            minSlope = endSlope;
-          }else if(!isTransparent({x,y})&&!extended){
-            startSlopes[totalObstacles] = startSlope;
-            endSlopes[totalObstacles++] = endSlope;
-          } //end if
-        } //end if
-      } //end for
-    } //end for
+    });
   }
 
   // test that the entire path passes the specified test function and return

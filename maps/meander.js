@@ -48,13 +48,25 @@ export function meander({map}){
     map.reset(); //set all sectors to empty
 
     // create bresenhams line
-    const line = map.bresenhamsLine(
-      map.constructor.getTerminalPoints({
+    const {line} = map.bresenhamsLine({
+
+      // getTerminalPoints will return x1,y1,x2,y2
+      ...map.constructor.getTerminalPoints({
         x1: 0,y1: 0,
         x2: map.width-1,y2: map.height-1,
         forward: false, backward: false //will prevent pruning
-      })
-    );
+      }),
+      onStart: ({state})=>{
+        state.line = [];
+      },
+      onTest: ({x1,y1,x2,y2,state})=>{
+        if(!map.isInbounds({x: x1,y: y1})||!map.isInbounds({x: x2,y:y2})){
+          return false;
+        } //end if
+        return true;
+      },
+      onSuccess: ({x,y,state})=> state.line.push(map.getSector({x,y}))
+    });
 
     // chunk the line
     const chunks = line.reduce((arr,item,i)=>{
