@@ -321,7 +321,9 @@ export class Map{
     onTest=()=>{return true;},
     onSuccess=()=>{},
     onFailure=()=>{},
+    onEach=()=>{},
     onFinish=()=>{},
+    exitOnFailure=true
   }={}){
     const dx = Math.abs(x2 - x1),
           dy = Math.abs(y2 - y1),
@@ -334,17 +336,19 @@ export class Map{
 
     onStart({x,y,x1,y1,x2,y2,state});
     do{
-      if(onTest({x,y,x1,y1,x2,y2,state})){
+      onEach({x,y,x1,y1,x2,y2,state});
+      if(!state.failing&&onTest({x,y,x1,y1,x2,y2,state})){
         onSuccess({x,y,x1,y1,x2,y2,state});
       }else{
-        onFailure({x,y,x1,y1,x2,y2,state});
         state.failing = true;
+        if(exitOnFailure) state.finished = true;
+        onFailure({x,y,x1,y1,x2,y2,state});
       } //end if
-      if(x==x2&&y==y2) state.failing = true;
+      if(x==x2&&y==y2) state.finished = true;
       error2 = 2 * error;
       if(error2 > -dy){ error -= dy; x += sx; }
       if(error2 < dx){ error += dx; y += sy; }
-    }while(!state.failing)
+    }while(!state.finished)
     onFinish({x,y,x1,y1,x2,y2,state});
     return state;
   }
@@ -527,16 +531,22 @@ export class Map{
     return null;
   }
 
+  computeFOV({x=null,y=null,...args}={}){
+    if(x===null||y===null) throw new Error('computeFOV: x & y required');
+    this.computeDirectionalFOV({x,y,direction:'east',...args});
+    this.computeDirectionalFOV({x,y,direction:'west',...args});
+  }
+
   // ray-casting permissive
   computeDirectionalFOV({
-    x,y,
+    x=null,y=null,
     direction='east',
     fieldOfViewDegrees=180,
     fieldOfViewRadians=fieldOfViewDegrees*Math.PI/180,
     radius=8,
-    accuracy=0.95, //higher accuracy required for higher radius
-    isTransparent=({x,y})=> this.map.isWalkable({x,y})||this.map.isEmpty({x,y}),
-    setTransparent=({x,y,state})=> state.visible.push({x,y}),
+    accuracy=0.97, //higher accuracy required for higher radius
+    isTransparent=({x,y})=> this.isWalkable({x,y})||this.isEmpty({x,y}),
+    setTransparent=({x,y,state})=> state.visible[`${x},${y}`]=true,
     isTranslucent=({x,y})=> this.isWindow({x,y}),
     setTranslucent=({x,y,state})=>{
       if(state.firstWindow){
@@ -545,42 +555,44 @@ export class Map{
         state.firstWindow = true;
       } //end if
     },
-    isOpaque=({x,y,state})=> this.isWall({x,y})||state.secondWindow,
-    setVisible=()=>{}
+    isOpaque=({x,y,state})=> this.isWall({x,y})||this.isDoorClosed({x,y})||state.secondWindow,
+    setVisible=()=>{},
+    onStart=({state})=>{ state.visible = {}; },
+    onTest=({x,y,state})=>{
+      if(!this.isInbounds({x,y})) return false;
+      if(isTransparent({x,y,state})) setTransparent({x,y,state});
+      if(isTranslucent({x,y,state})) setTranslucent({x,y,state});
+      state.visible[`${x},${y}`]=true;
+      setVisible({x,y,state});
+      if(isOpaque({x,y,state})) return false;
+      return true;
+    },
+    ...args
   }={}){
+    if(x===null||y===null) throw new Error('computeDirectionalFOV: x & y required');
     const quadrants = {
-      north: [{x2: -1, y2: -1},{x2: 1, y2: -1}],
-      east: [{x2: 1, y2: -1},{x2: 1, y2: 1}],
-      south: [{x2: -1, y2: 1},{x2: 1, y2: 1}],
-      west: [{x2: -1, y2: -1},{x2: -1, y2: 1}]
-    };
-
-    quadrants[direction].forEach(quad=>{
-      for(
-        let sigma = fieldOfViewRadians/2;
-        sigma > 0;
-        sigma -= 0.05
-      ){
-        const [x1,y1] = [x,y],
-              x2 = Math.round(x1 + quad.x2 * radius * Math.cos(sigma)),
-              y2 = Math.round(y1 + quad.y2 * radius * Math.sin(sigma));
-
-        this.bresenhamsLine({
-          x1,y1,x2,y2,
-          onStart: ({state})=>{
-            state.visible = [];
+            north: -Math.PI,
+            east: -Math.PI/2,
+            south: Math.PI*2,
+            west: Math.PI/2*5,
+            northwest: Math.PI/4*3,
+            northeast: -3*Math.PI/4,
+            southwest: Math.PI/4,
+            southeast: -Math.PI/4
           },
-          onTest: ({x,y,state})=>{
-            if(isTransparent({x,y,state})) setTransparent({x,y,state});
-            if(isTranslucent({x,y,state})) setTranslucent({x,y,state});
-            setVisible({x,y});
-            if(isOpaque({x,y,state})) return false;
-            return true;
-          },
-          onSuccess: ({x,y,state})=> state.visible.push({x,y})
-        });
-      } //end for
-    });
+          theta = quadrants[direction]; 
+
+    for(
+      let sigma = fieldOfViewRadians;
+      sigma > 0;
+      sigma -= 1 - accuracy
+    ){
+      const [x1,y1] = [x,y],
+            x2 = Math.round(x1 + radius * Math.cos(sigma + theta)),
+            y2 = Math.round(y1 + radius * Math.sin(sigma + theta));
+
+      this.bresenhamsLine({x1,y1,x2,y2,onStart,onTest, ...args});
+    } //end for
   }
 
   // test that the entire path passes the specified test function and return
