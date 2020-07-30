@@ -1,6 +1,8 @@
+import {roomGetUniqueExits} from '../utilities/roomGetUniqueExits';
+
 export const islandSquare = {
   name: 'island square',
-  fn({map,x1,y1,x2,y2}){
+  fn({map,roomDirection,x1,y1,x2,y2}){
     const exits = {
       north: [],
       south: [],
@@ -48,13 +50,13 @@ export const islandSquare = {
         } //end if
       }
     });
-    return {success:true,exits};
+    return {success:true,exits: roomGetUniqueExits({map,exits,roomDirection})};
   }
 };
 
 export const islandCircle = {
   name: 'island circle',
-  fn({map,x1,y1,x2,y2}){
+  fn({map,roomDirection,x1,y1,x2,y2}){
     const centerX = x1+(x2-x1)/2,
           centerY = y1+(y2-y1)/2,
           failed = [],
@@ -131,6 +133,6 @@ export const islandCircle = {
         }).length
       ) sector.setWall();
     });
-    return {success:true,exits};
+    return {success:true,exits: roomGetUniqueExits({map,exits,roomDirection})};
   }
 };

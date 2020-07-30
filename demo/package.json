@@ -22,11 +22,11 @@
     "babel-core": "^6.26.3",
     "babel-preset-env": "^1.7.0",
     "parcel": "^1.12.4",
-    "pug": "^2.0.4",
-    "stylus": "^0.54.7"
+    "pug": "^3.0.0",
+    "stylus": "^0.54.8"
   },
   "dependencies": {
-    "@ion-cloud/core": "^2.0.0"
+    "@ion-cloud/core": "^2.7.0"
   },
   "readmeFilename": "README.md",
   "homepage": "https://github.com/NathanielInman/demo"

@@ -1,6 +1,8 @@
+import {roomGetUniqueExits} from '../utilities/roomGetUniqueExits';
+
 export const normalSquare = {
   name: 'normal square',
-  fn({map,x1,y1,x2,y2}){
+  fn({map,roomDirection,x1,y1,x2,y2}){
     const exits = {
       north: [],
       south: [],
@@ -32,13 +34,13 @@ export const normalSquare = {
         sector.setFloor();
       }
     });
-    return {success:true,exits};
+    return {success:true,exits:roomGetUniqueExits({map,exits,roomDirection})};
   }
 };
 
 export const normalCircle = {
   name: 'normal circle',
-  fn({map,x1,y1,x2,y2}){
+  fn({map,roomDirection,x1,y1,x2,y2}){
     const centerX = x1+(x2-x1)/2,
           centerY = y1+(y2-y1)/2,
           failed = [],
@@ -99,6 +101,6 @@ export const normalCircle = {
         }).length
       ) sector.setWall();
     });
-    return {success:true,exits};
+    return {success:true,exits:roomGetUniqueExits({map,roomDirection,exits})};
   }
 };

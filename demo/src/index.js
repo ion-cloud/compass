@@ -17,8 +17,8 @@ if(!easel.activated){
   </p>`;
 }else{
   noscript.style.display='none';
-  const map = new Map(50,50),
-        {generator} = maps.find(map=> map.name==='meander');
+  const map = new Map({width:100,height:100}),
+        {generator} = maps.find(map=> map.name==='template');
 
   for(let y=0;y<map.height;y++){
     map.sectors[y]=[];
