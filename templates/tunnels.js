@@ -1,6 +1,12 @@
-export const special = {
-  name: 'special',
+export const tunnels = {
+  name: 'tunnels',
   options: {
+    doors: {
+      ignore: 1,
+      expand: {
+        chance: 1
+      }
+    },
     rooms: [
       {
         name: 'normal square',
@@ -19,8 +25,9 @@ export const special = {
         ]
       },
       {
-        name: 'marsh square',
+        name: 'square',
         weight: 2,
+        waterChance: 0.5,
         sizes: [
           {size: 5, weight: 10},{size: 4, weight: 35},
           {size: 3, weight: 70},{size: 2, weight: 100}

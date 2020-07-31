@@ -3,8 +3,16 @@ export const standardCrypt = {
   options: {
     rooms: [
       {
+        name: 'prefab',
+        filter: ['caves','afi','lahalusplmen','ewiv','vesaeves','ongi','darashek','biomenaekylsch','haloibimensk','sweth','kerieves','aclam','othremen','shuscho','obisyn','uvesoives','kerocl','darokyl','kerehaloscrb','yflulas','kerohi','iotae','vesisitgh','asynaryn','shangi','halimenoclkyl','wriemeny','alaso','luriechb','kylomenethors','kerosk','menomeniefb','kerirumenph','kyligli','haleikyleicha','alynumen','iehaloth','mamenobm','oryno','daraclistlas','ati'],
+        weight: 4,
+        sizes: [
+          {size: 20, weight: 1}
+        ]
+      },
+      {
         name: 'normal square',
-        weight: 8,
+        weight: 16,
         sizes: [
           {size: 5, weight: 10},{size: 4, weight: 35},
           {size: 3, weight: 70},{size: 2, weight: 30}
@@ -19,8 +27,9 @@ export const standardCrypt = {
         ]
       },
       {
-        name: 'marsh square',
+        name: 'square',
         weight: 2,
+        waterChance: 0.5,
         sizes: [
           {size: 5, weight: 10},{size: 4, weight: 35},
           {size: 3, weight: 70},{size: 2, weight: 100}
@@ -40,38 +49,6 @@ export const standardCrypt = {
         sizes: [
           {size: 9, weight: 4},{size: 8, weight: 8},
           {size: 7, weight: 12},{size: 6, weight: 7}
-        ]
-      },
-      {
-        name: 'normal circle',
-        weight: 10,
-        sizes: [
-          {size: 9, weight: 4},{size: 8, weight: 8},
-          {size: 7, weight: 12},{size: 6, weight: 20}
-        ]
-      },
-      {
-        name: 'island circle',
-        weight: 4,
-        sizes: [
-          {size: 9, weight: 4},{size: 8, weight: 8},
-          {size: 7, weight: 12},{size: 6, weight: 20}
-        ]
-      },
-      {
-        name: 'island walkways circle',
-        weight: 1,
-        sizes: [
-          {size: 9, weight: 4},{size: 8, weight: 8},
-          {size: 7, weight: 12},{size: 6, weight: 20}
-        ]
-      },
-      {
-        name: 'water pool circle',
-        weight: 2,
-        sizes: [
-          {size: 9, weight: 4},{size: 8, weight: 8},
-          {size: 7, weight: 12},{size: 6, weight: 20}
         ]
       }
     ]

@@ -1,10 +1,27 @@
 export const marshyDredge = {
   name: 'marshy dredge',
   options: {
+    doors:{
+      ignore: 1,
+      expand:{
+        chance: 0.6,
+        size: 2,
+        waterChance: 0.5
+      }
+    },
     rooms: [
       {
-        name: 'marsh square',
+        name: 'normal',
         weight: 2,
+        waterChance: 0.5,
+        sizes: [
+          {size: 2, weight: 100}
+        ]
+      },
+      {
+        name: 'normal',
+        weight: 2,
+        waterChance: 1,
         sizes: [
           {size: 2, weight: 100}
         ]
@@ -22,6 +39,7 @@ export const marshyDredge = {
       {
         name: 'normal circle',
         weight: 2,
+        waterChance: 1,
         sizes: [
           {size: 15, weight: 2},{size: 14, weight: 4},
           {size: 13, weight: 6},{size: 12, weight: 8},
@@ -33,8 +51,9 @@ export const marshyDredge = {
         ]
       },
       {
-        name: 'marsh circle',
+        name: 'normal circle',
         weight: 8,
+        waterChance: 0.5,
         sizes: [
           {size: 15, weight: 2},{size: 14, weight: 4},
           {size: 13, weight: 6},{size: 12, weight: 8},

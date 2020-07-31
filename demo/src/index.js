@@ -18,7 +18,7 @@ if(!easel.activated){
 }else{
   noscript.style.display='none';
   const map = new Map({width:100,height:100}),
-        {generator} = maps.find(map=> map.name==='template');
+        {generator} = maps.find(map=> map.name==='template - tunnels');
 
   for(let y=0;y<map.height;y++){
     map.sectors[y]=[];

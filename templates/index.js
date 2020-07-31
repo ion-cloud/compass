@@ -1,13 +1,13 @@
 import {basic} from './basic';
 import {ancientCrypt} from './ancientCrypt';
 import {cryptCatacombs} from './cryptCatacombs';
-import {deepPassages} from './deepPassages';
+import {passages} from './passages';
 import {marshyDredge} from './marshyDredge';
-import {special} from './special';
+import {tunnels} from './tunnels';
 import {standardCrypt} from './standardCrypt';
-import {widePassages} from './widePassages';
+import {caverns} from './caverns';
 
 export const templates = [
-  basic,ancientCrypt,cryptCatacombs,deepPassages,marshyDredge,special,
-  standardCrypt,widePassages
+  basic,ancientCrypt,cryptCatacombs,passages,marshyDredge,tunnels,
+  standardCrypt,caverns
 ];

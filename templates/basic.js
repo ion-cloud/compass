@@ -4,7 +4,7 @@ export const basic = {
     prefabOrigin: true,
     rooms: [
       {
-        name: 'prefab',
+        name: 'marshy prefab',
         weight: 8,
         sizes: [
           {size: 20, weight: 1}

@@ -1,6 +1,13 @@
-export const deepPassages = {
-  name: 'deep passages',
+export const passages = {
+  name: 'passages',
   options: {
+    doors: {
+      ignore: 1,
+      expand: {
+        chance: 0.4,
+        waterChance: 0.5
+      }
+    },
     rooms: [
       {
         name: 'normal circle',
@@ -14,8 +21,9 @@ export const deepPassages = {
         ]
       },
       {
-        name: 'marsh circle',
+        name: 'circle',
         weight: 8,
+        waterChance: 0.5,
         sizes: [
           {size: 11, weight: 4},{size: 10, weight: 8},
           {size: 9, weight: 12},{size: 8, weight: 16},

@@ -1,6 +1,14 @@
-export const widePassages = {
-  name: 'wide passages',
+export const caverns = {
+  name: 'caverns',
   options: {
+    doors: {
+      ignore: 1,
+      expand: {
+        chance: 0.7,
+        size: 4,
+        waterChance: 0.2
+      }
+    },
     rooms: [
       {
         name: 'normal circle',
@@ -13,8 +21,9 @@ export const widePassages = {
         ]
       },
       {
-        name: 'marsh circle',
+        name: 'circle',
         weight: 8,
+        waterChance: 0.2,
         sizes: [
           {size: 15, weight: 4},{size: 13, weight: 6},
           {size: 11, weight: 8},{size: 9, weight: 10},

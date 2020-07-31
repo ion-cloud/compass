@@ -1,7 +1,34 @@
 export const ancientCrypt = {
   name: 'ancient crypt',
   options: {
+    doors:{
+      ignore: 0.6
+    },
     rooms: [
+      {
+        name: 'prefab',
+        weight: 1,
+        waterChance: 1,
+        sizes: [
+          {size: 20, weight: 1}
+        ]
+      },
+      {
+        name: 'prefab',
+        weight: 1,
+        waterChance: 0.2,
+        sizes: [
+          {size: 20, weight: 1}
+        ]
+      },
+      {
+        name: 'prefab',
+        weight: 1,
+        waterChance: 0.5,
+        sizes: [
+          {size: 20, weight: 1}
+        ]
+      },
       {
         name: 'normal square',
         weight: 2,
@@ -18,8 +45,9 @@ export const ancientCrypt = {
         ]
       },
       {
-        name: 'marsh square',
+        name: 'normal square',
         weight: 8,
+        waterChance: 0.5,
         sizes: [
           {size: 5, weight: 10},{size: 4, weight: 35},
           {size: 3, weight: 70},{size: 2, weight: 100}
@@ -44,8 +72,9 @@ export const ancientCrypt = {
         ]
       },
       {
-        name: 'marsh circle',
+        name: 'normal circle',
         weight: 8,
+        waterChance: 0.5,
         sizes: [
           {size: 9, weight: 4},{size: 8, weight: 8},
           {size: 7, weight: 12},{size: 6, weight: 20},

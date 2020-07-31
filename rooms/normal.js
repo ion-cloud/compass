@@ -2,7 +2,7 @@ import {roomGetUniqueExits} from '../utilities/roomGetUniqueExits';
 
 export const normalSquare = {
   name: 'normal square',
-  fn({map,roomDirection,x1,y1,x2,y2}){
+  fn({map,room,roomDirection,x1,y1,x2,y2}){
     const exits = {
       north: [],
       south: [],
@@ -31,7 +31,11 @@ export const normalSquare = {
         if(y===y1&&x!==x1&&x!==x2) exits.north.push(sector);
         if(y===y2&&x!==x1&&x!==x2) exits.south.push(sector);
         if(x===x1||x===x2||y===y1||y===y2) return sector.setWall();
-        sector.setFloor();
+        if(room.waterChance&&Math.random()<room.waterChance){
+          sector.setWater();
+        }else{
+          sector.setFloor();
+        } //end if
       }
     });
     return {success:true,exits:roomGetUniqueExits({map,exits,roomDirection})};
@@ -40,7 +44,7 @@ export const normalSquare = {
 
 export const normalCircle = {
   name: 'normal circle',
-  fn({map,roomDirection,x1,y1,x2,y2}){
+  fn({map,room,roomDirection,x1,y1,x2,y2}){
     const centerX = x1+(x2-x1)/2,
           centerY = y1+(y2-y1)/2,
           failed = [],
@@ -90,14 +94,18 @@ export const normalCircle = {
       draw:sector=>{
         const {x,y} = sector;
 
-        sector.setFloor();
+        if(room.waterChance&&Math.random()<room.waterChance){
+          sector.setWater();
+        }else{
+          sector.setFloor();
+        } //end if
       }
     });
     failed.forEach(sector=>{
       if(
         sector.isEmpty()&&
         map.getNeighbors({
-          sector,test:sector=>sector.isFloor()
+          sector,test:sector=>sector.isWalkable()
         }).length
       ) sector.setWall();
     });

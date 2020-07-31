@@ -17,7 +17,7 @@ const charMap = {
 
 export const prefab = {
   name: 'prefab',
-  fn({map,name,prefab,roomDirection,x,y,x1,y1,x2,y2}){
+  fn({map,room,prefab,roomDirection,x,y,x1,y1,x2,y2}){
     const doors = [],
           {width,height} = prefab.details;
 
@@ -34,7 +34,7 @@ export const prefab = {
 
     // not all prefabs have an entry door at the bottom center, those are
     // allowed in origin prefabs but not regular connected prefab rooms
-    if(!isPrefabEntryDoor({prefab})&&name!=='prefab origin'){
+    if(!isPrefabEntryDoor({prefab})&&room.name!=='prefab origin'){
       return {success:false};
     } //end if
 
@@ -49,7 +49,18 @@ export const prefab = {
         if(char==='+'){
           doors.push({x,y});
         }else if(charMap.hasOwnProperty(char)){
-          map[charMap[char]]({x,y}); //ignoring 'setEmpty'
+          const randomNumber = Math.random();
+
+          if(
+            charMap[char].includes('setFloor')&&
+            room.waterChance&&Math.random()<room.waterChance
+          ){
+            map.setWater({x,y});
+          }else if(charMap[char].includes('setFloor')){
+            map.setFloor({x,y});
+          }else{
+            map[charMap[char]]({x,y}); //ignoring 'setEmpty'
+          } //end if
         } //end if
       } //end for
     } //end for

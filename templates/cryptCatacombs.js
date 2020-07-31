@@ -1,6 +1,10 @@
 export const cryptCatacombs = {
   name: 'crypt catacombs',
   options: {
+    prefabOrigin: true,
+    doors:{
+      ignore: 0.5
+    },
     rooms: [
       {
         name: 'normal square',
@@ -19,8 +23,9 @@ export const cryptCatacombs = {
         ]
       },
       {
-        name: 'marsh square',
+        name: 'square',
         weight: 1,
+        waterChance: 0.5,
         sizes: [
           {size: 5, weight: 10},{size: 4, weight: 35},
           {size: 3, weight: 70},{size: 2, weight: 100}

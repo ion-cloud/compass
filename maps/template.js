@@ -9,7 +9,8 @@ import {GenericState} from '../utilities/GenericState';
 export function template({map,name,options=null}={}){
   if(!options) throw new Error('template generator options missing');
   const todo = [], //holds the list of directions that need to be searched
-        prefabs = roomGetPossiblePrefabs({map});
+        prefabs = roomGetPossiblePrefabs({map}),
+        doors = [];
 
   let cx = Math.floor(map.width/2),
       cy = Math.floor(map.height/2),
@@ -52,33 +53,67 @@ export function template({map,name,options=null}={}){
       map.setWall({x:next.x,y:next.y});
     } //end if
   }while(todo.length>0&&step<500||step===0);
+  if(options.doors&&options.doors.expand&&doors.length) doorExpand();
 
-  /*
   // now remove unwalkable
   map.clipOrphaned({
     test: sector=> sector.isWalkable()||sector.isDoor(),
-    failure: sector=> sector.setRemoved()
-  });*/
+    failure: sector=> sector.setWallSpecial()
+  });
 
   // given a specified x and y coordinate, roomsize, direction and type
   // we will draw a circular room
   // eslint-disable-next-line complexity
   function buildRoom({room,x,y,roomDirection}={}){
 
-    const {fn} = rooms.find(r=>r.name===(room.name==='prefab origin'?'prefab':room.name)),
+    const {fn} = rooms.find(r=>r.name.includes(room.name.includes('prefab')?'prefab':room.name)),
           roomSize = room.name==='prefab origin'?null:takeWeighted(room.sizes).size,
           prefab = room.name==='prefab origin'?
-            takeRandom(prefabs):room.name==='prefab'?
-            takeRandom(prefabs.filter(prefab=>prefab.details.width<roomSize&&prefab.details.height<roomSize)):null,
+            takeRandom(prefabs):room.name.includes('prefab')?
+            takeRandom(
+              prefabs.filter(prefab=>{
+                if(room.filter){
+                  return room.filter.includes(prefab.name);
+                } //end if
+                return prefab.details.width<roomSize&&
+                  prefab.details.height<roomSize;
+              })
+            ):null,
           roomSizeX = room.name.includes('prefab')?prefab.details.width:roomSize,
           roomSizeY = room.name.includes('prefab')?prefab.details.height:roomSize,
           {x1,y1,x2,y2} = roomGetCoordinates({x,y,roomDirection,roomSizeX,roomSizeY}),
-          {success,exits} = fn({map,name: room.name,prefab,roomDirection,x1,y1,x2,y2});
+          {success,exits} = fn({map,room,prefab,roomDirection,x1,y1,x2,y2});
 
     // short-circuit
     if(!success) return false;
-    if(!prefab) map.setDoor({x,y});
+    if(!prefab){
+      map.setDoor({x,y});
+      doors.push({x,y});
+    } //end if
+    if(!prefab&&roomSize<3||options.doors&&options.doors.ignore&&Math.random()<options.doors.ignore) map.setFloor({x,y});
     exits.forEach(({x,y,direction})=> todo.push(new GenericState({x,y,direction})));
     return true;
   } //end buildSphereRoom()
+
+  function doorExpand(){
+    doors.forEach(({x,y})=>{
+      map
+        .getNeighbors({x,y,size:options.doors.expand.size||1})
+        .forEach(sector=>{
+          if(Math.random()<options.doors.expand.chance){
+            if(options.doors.expand.waterChance&&Math.random()<options.doors.expand.waterChance){
+              sector.setWater();
+            }else{
+              sector.setFloor();
+            } //end if
+          } //end if
+          map.getNeighbors({
+            ...sector,
+            test(sector){
+              return sector.isEmpty();
+            }
+          }).forEach(sector=> sector.setWall());
+        });
+    });
+  } //end doorExpand()
 } //end function
