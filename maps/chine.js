@@ -87,20 +87,39 @@ export function chine({map}){
   }while(x!==map.width-1&&y!==map.height-1);
 
   // now close everything not close enough to river
-  map.sectors.forEach(row=>{
-    row.forEach(sector=>{
-      if(map.isRect({
-        x1: sector.x-3,
-        y1: sector.y-3,
-        x2: sector.x+3,
-        y2: sector.y+3,
-        test(sector){
-          return sector.isWater();
-        }
-      })&&Math.random()<0.5){
-        sector.setWall();
-      }else if(!sector.isWater()&&Math.random()<0.1){
+  const river = [];
+
+  map.fillRect({
+    x1: map.startX, y1: map.startY, x2: map.width, y2: map.height,
+    draw(sector){
+      const {x,y} = sector;
+
+      if(sector.isWater()||sector.isWaterSpecial()){
+        river.push(sector);
+        return; //short-circuit
+      } //end if
+      if(Math.random()<0.1){
         sector.setWallSpecial();
+      }else if(Math.random()<0.4){
+        sector.setWall();
+      } //end if
+    }
+  });
+
+  const finished = {};
+
+  river.forEach(({x,y})=>{
+    map.fillRect({
+      x1: x-3, y1: y-3, x2: x+3, y2: y+3,
+      test({x,y}){
+        return finished[`x${x}y${y}`]===undefined;
+      },
+      draw(sector){
+        const {x,y} = sector;
+
+        finished[`x${x}y${y}`] = true;
+        if(sector.isWater()||sector.isWaterSpecial()) return;
+        if(Math.random()<0.9) sector.setFloor();
       }
     });
   });
@@ -117,17 +136,15 @@ export function chine({map}){
 
   // lastly lets find all floor that's near water and give it a large chance
   // to be a corridor (sand)
-  map.sectors.forEach(row=>{
-    row.forEach(sector=>{
-      if(sector.isWater()) return; //leave water alone
-      const x = sector.x,y = sector.y;
+  map.sectors.getAll().forEach(sector=>{
+    if(sector.isWater()) return; //leave water alone
+    const x = sector.x,y = sector.y;
 
-      if(map.isInbounds({x: x-1,y})&&map.isWater({x: x-1,y})||
-         map.isInbounds({x: x+1,y})&&map.isWater({x: x+1,y})||
-         map.isInbounds({x,y: y-1})&&map.isWater({x,y: y-1})||
-         map.isInbounds({x,y: y+1})&&map.isWater({x,y: y+1})){
-        if(Math.random()<0.5) sector.setFloorSpecial();
-      } //end if
-    });
+    if(map.isInbounds({x: x-1,y})&&map.isWater({x: x-1,y})||
+       map.isInbounds({x: x+1,y})&&map.isWater({x: x+1,y})||
+       map.isInbounds({x,y: y-1})&&map.isWater({x,y: y-1})||
+       map.isInbounds({x,y: y+1})&&map.isWater({x,y: y+1})){
+      if(Math.random()<0.5) sector.setFloorSpecial();
+    } //end if
   });
 } //end function

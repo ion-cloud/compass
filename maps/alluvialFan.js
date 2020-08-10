@@ -23,8 +23,9 @@ export function alluvialFan({map}){
       map.noise.seed();
       viableStartSectors.length = 0;
       viableEndSectors.length = 0;
-      map.sectors.forEach(row=>{
-        row.forEach(sector=>{
+      map.fillRect({
+        x1: map.startX, y1: map.startY, x2: map.width, y2: map.height,
+        draw(sector){
           const n = (1+map.noise.simplex2(sector.x/map.width,sector.y/map.height))/2;
 
           if(n<0.5){
@@ -48,7 +49,7 @@ export function alluvialFan({map}){
               viableEndSectors.push(sector);
             } //end if
           } //end if
-        });
+        }
       });
     }while(!viableStartSectors.length||!viableEndSectors.length)
 
@@ -85,6 +86,7 @@ export function alluvialFan({map}){
         } //end if
       }
     });
+    if(!terminalSector) continue;
     a1 = Math.pow(terminalSector.x-startSector.x,2);
     a2 = Math.pow(terminalSector.y-startSector.y,2);
     riverSuccess = Math.sqrt(a1+a2)>alluvialDistance*2;
@@ -162,19 +164,17 @@ export function alluvialFan({map}){
         v = d?10:7; //vertical
 
   map.noise.seed();
-  map.sectors.forEach(row=>{
-    row.forEach(sector=>{
-      const n = (1+map.noise.simplex2(sector.x/map.width*h,sector.y/map.height*v))/2;
+  map.sectors.getAll().forEach(sector=>{
+    const n = (1+map.noise.simplex2(sector.x/map.width*h,sector.y/map.height*v))/2;
 
-      if(n<0.6&&sector.isWall()&&Math.random()<0.4){
-        sector.setFloor();
-      }else if(n<0.7&&Math.random()<0.4&&sector.isWall()){
-        sector.setFloorSpecial();
-      }else if(n<0.7&&sector.isWall()){
-        sector.setFloor();
-      }else if(n<0.8&&sector.isWall()){
-        sector.setFloorSpecial();
-      } //end if
-    });
+    if(n<0.6&&sector.isWall()&&Math.random()<0.4){
+      sector.setFloor();
+    }else if(n<0.7&&Math.random()<0.4&&sector.isWall()){
+      sector.setFloorSpecial();
+    }else if(n<0.7&&sector.isWall()){
+      sector.setFloor();
+    }else if(n<0.8&&sector.isWall()){
+      sector.setFloorSpecial();
+    } //end if
   });
 } //end function

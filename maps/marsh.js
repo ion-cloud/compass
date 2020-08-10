@@ -1,6 +1,7 @@
 export function marsh({map}){
-  map.sectors.forEach(row=>{
-    row.forEach(sector=>{
+  map.fillRect({
+    x1: map.startX, y1: map.startY, x2: map.width, y2: map.height,
+    draw(sector){
       const n = (1+map.noise.simplex2(sector.x/map.width*2,sector.y/map.height*2))/2;
 
       if(n<0.15){
@@ -16,7 +17,7 @@ export function marsh({map}){
       }else{
         sector.setFloorSpecial();
       } //end if
-    });
+    }
   });
 
   map.clipOrphaned({

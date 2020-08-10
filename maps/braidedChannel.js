@@ -1,17 +1,12 @@
+import {takeRandom} from '../utilities/takeRandom';
+
 export function braidedChannel({map}){
-  const water = [];
+  const water = [],
+        directions = [
+          'horizontal','vertical','forward','backward'
+        ];
 
-  let x1,y1,x2,y2,direction=Math.random();
-
-  if(direction<0.25){
-    direction = 'horizontal';
-  }else if(direction<0.5){
-    direction = 'vertical';
-  }else if(direction<0.75){
-    direction = 'forward';
-  }else{
-    direction = 'backward';
-  } //end if
+  let x1,y1,x2,y2,direction=takeRandom(directions);
 
   for(let rivers=0;rivers<Math.floor(5+Math.random()*5);rivers++){
     if(direction==='horizontal'){
@@ -59,33 +54,46 @@ export function braidedChannel({map}){
   } //end for
 
   // now we'll surround water with sand
-  water.forEach(sector=>{
-    map.getNeighbors({
-      x: sector.x,y: sector.y,
-      test(sector){
-        return sector.isEmpty();
+  const finished = {};
+
+  water.forEach(({x,y})=>{
+    map.fillRect({
+      x1: x-2, y1: y-2, x2: x+2, y2: y+2,
+      test({x,y}){
+        return finished[`x${x}y${y}`]===undefined;
+      },
+      draw(sector){
+        const {x,y} = sector;
+
+        finished[`x${x}y${y}`] = true;
+        if(sector.isWater()) return;
+        const nearWater = map.getNeighbors({
+          x,y,test:sector=>sector.isWater(),
+          orthogonal: false
+        }).length;
+
+        if(nearWater) sector.setFloorSpecial();
       }
-    }).forEach(sector=> sector.setFloorSpecial());
+    });
   });
 
   // now we'll generate some noise and populate all non-river data
   const x=['horizontal','forward'].includes(direction)?6:12,
         y=['vertical','backward'].includes(direction)?6:12;
 
-  map.sectors.forEach(row=>{
-    row.forEach(sector=>{
+  map.fillRect({
+    x1: map.startX, y1: map.startY, x2: map.width, y2: map.height,
+    draw(sector){
       const n = (1+map.noise.simplex2(sector.x/map.width*x,sector.y/map.height*y))/2;
 
-      if(n<0.2&&!sector.isWater()){
+      if(n<0.2&&sector.isEmpty()){
         sector.setWallSpecial();
-      }else if(n<0.5&&!sector.isWater()){
+      }else if(n<0.5&&sector.isEmpty()){
         sector.setWall();
       }else if(sector.isEmpty()){
         sector.setFloor();
-      }else if(n<0.2&&sector.isWater()){
-        sector.setWaterSpecial();
       } //end if
-    });
+    }
   });
 
   map.clipOrphaned({

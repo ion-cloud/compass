@@ -163,7 +163,7 @@ export function clusteredRooms({map,retry=5}){
         if(
           map.isRect({
             x1: x, y1: y, x2: t.x, y2: t.y,
-            test(sector){
+            hasAll(sector){
               return sector.isEmpty()&&
                 map.isInbounds({
                   x: sector.x, y: sector.y,
@@ -210,7 +210,7 @@ export function clusteredRooms({map,retry=5}){
   // We find the end of a hallway and recursively work backwards until
   // we find a door or more than one hallway directional path
   function removeDeadEnds(){
-    map.sectors.flat().forEach(sector=>{
+    map.sectors.getAll().forEach(sector=>{
       if(!sector.isFloorSpecial()) return; //short-circuit
       let neighbors = map.getNeighbors({
         sector,orthogonal:false,
@@ -237,7 +237,7 @@ export function clusteredRooms({map,retry=5}){
 
   // surround the corridors that arent surrounded with walls yet with walls now.
   function wallify(){
-    map.sectors.flat().forEach(sector=>{
+    map.sectors.getAll().forEach(sector=>{
       if(!sector.isEmpty()&&!sector.isWall()) return; //short-circuit
       if(
         map.getNeighbors({

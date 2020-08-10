@@ -80,13 +80,13 @@ export function butte({map}){
       map.isInbounds({x: x-1,y})&&map.isWalkable({x: x-1,y})&&
       map.isInbounds({x: x+1,y})&&map.isWalkable({x: x+1,y})
     ){
-      map.setDoor({x,y}=sector);
+      map.setDoor(sector);
       return true;
     }else if(
       map.isInbounds({x,y: y-1})&&map.isWalkable({x,y: y-1})&&
       map.isInbounds({x,y: y+1})&&map.isWalkable({x,y: y+1})
     ){
-      map.setDoor({x,y}=sector);
+      map.setDoor(sector);
       return true;
     } //end if
     return false;

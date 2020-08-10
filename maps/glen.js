@@ -14,14 +14,15 @@ export function glen({map}){
   });
 
   // now close everything not close enough to river
-  map.sectors.forEach(row=>{
-    row.forEach(sector=>{
+  map.fillRect({
+    x1: map.startX, y1: map.startY, x2: map.width, y2: map.height,
+    draw(sector){
       if(!sector.isWater()&&Math.random()<0.4){
         sector.setWall();
       }else if(!sector.isWater()&&Math.random()<0.1){
         sector.setWallSpecial();
       } //end if
-    });
+    }
   });
 
   // now that we've represented the map fully, lets find the largest walkable
@@ -36,19 +37,17 @@ export function glen({map}){
 
   // lets find all floor that's near water and give it a large chance
   // to be sand
-  map.sectors.forEach(row=>{
-    row.forEach(sector=>{
-      if(sector.isWater()) return; //leave water alone
-      const x = sector.x,y = sector.y;
+  map.sectors.getAll().forEach(sector=>{
+    if(sector.isWater()) return; //leave water alone
+    const x = sector.x,y = sector.y;
 
-      if(
-        map.isInbounds({x: x-1,y})&&map.isWater({x: x-1,y})||
-        map.isInbounds({x: x+1,y})&&map.isWater({x: x+1,y})||
-        map.isInbounds({x,y: y-1})&&map.isWater({x,y: y-1})||
-        map.isInbounds({x,y: y+1})&&map.isWater({x,y: y+1})
-      ){
-        if(Math.random()<0.5) sector.setFloorSpecial();
-      } //end if
-    });
+    if(
+      map.isInbounds({x: x-1,y})&&map.isWater({x: x-1,y})||
+      map.isInbounds({x: x+1,y})&&map.isWater({x: x+1,y})||
+      map.isInbounds({x,y: y-1})&&map.isWater({x,y: y-1})||
+      map.isInbounds({x,y: y+1})&&map.isWater({x,y: y+1})
+    ){
+      if(Math.random()<0.5) sector.setFloorSpecial();
+    } //end if
   });
 } //end function

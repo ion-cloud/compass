@@ -18,8 +18,9 @@ export function mogote({map}){
 
   // now we'll create a map boundary that's fuzzy to contain
   // the player
-  map.sectors.forEach((row,y)=>{
-    row.forEach((sector,x)=>{
+  map.fillRect({
+    x1: map.startX, y1: map.startY, x2: map.width, y2: map.height,
+    draw(sector){
       if(sector.isWallSpecial()) return; //don't override
       const yd = Math.abs(y-map.height/2)/(map.height/2),
             xd = Math.abs(x-map.width/2)/(map.width/2),
@@ -42,8 +43,8 @@ export function mogote({map}){
       }else{
         sector.setFloor();
       } //end if
-    }); //end for
-  }); //end for
+    }
+  });
 
   // finally we'll clean up unwalkable sections
   map.clipOrphaned({

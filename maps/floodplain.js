@@ -84,8 +84,9 @@ export function floodplain({map}){
   const x=['horizontal','forward'].includes(direction)?6:12,
         y=['vertical','backward'].includes(direction)?6:12;
 
-  map.sectors.forEach(row=>{
-    row.forEach(sector=>{
+  map.fillRect({
+    x1: map.startX, y1: map.startY, x2: map.width, y2: map.height,
+    draw(sector){
       const n = (1+map.noise.simplex2(sector.x/map.width*x,sector.y/map.height*y))/2;
 
       if(n<0.2&&!sector.isWater()){
@@ -97,7 +98,7 @@ export function floodplain({map}){
       }else if(n<0.2&&sector.isWater()){
         sector.setWaterSpecial();
       } //end if
-    });
+    }
   });
 
   map.clipOrphaned({

@@ -125,127 +125,132 @@ export function patternedRooms({map}){
   // now iterate through each room and any room with only two doors will be a hallway
   const currentRoom = {sectors:[],doors:[],unmapped:[]};
 
-  map.sectors.forEach(row=>{
-    row.forEach(sector=>{
-      if(sector.isFloor()&&!sector.roomNumber){
-        currentRoom.sectors.length = 0;
-        currentRoom.doors.length = 0;
-        currentRoom.unmapped.length = 0;
-        let testSector = sector;
+  map.sectors.getAll().forEach(sector=>{
+    if(sector.isFloor()&&!sector.roomNumber){
+      currentRoom.sectors.length = 0;
+      currentRoom.doors.length = 0;
+      currentRoom.unmapped.length = 0;
+      let testSector = sector;
 
-        map.setRoom({x:testSector.x,y:testSector.y,id:-1});
-        do{
-          currentRoom.sectors.push(testSector);
-          if(map.isInbounds(testSector,'west')&&!map.getRoom(testSector,'west')){
-            if(map.isFloor(testSector,'west')){
-              currentRoom.unmapped.push(map.getSector(testSector,'west'));
-              map.setRoom({x:testSector.x-1,y:testSector.y,id:-1});
-            }else if(map.isDoor(testSector,'west')){
-              currentRoom.doors.push(testSector);
-            } //end if
+      map.setRoom({x:testSector.x,y:testSector.y,id:-1});
+      do{
+        currentRoom.sectors.push(testSector);
+        if(map.isInbounds(testSector,'west')&&!map.getRoom(testSector,'west')){
+          if(map.isFloor(testSector,'west')){
+            currentRoom.unmapped.push(map.getSector(testSector,'west'));
+            map.setRoom({x:testSector.x-1,y:testSector.y,id:-1});
+          }else if(map.isDoor(testSector,'west')){
+            currentRoom.doors.push(testSector);
           } //end if
-          if(map.isInbounds(testSector,'north')&&!map.getRoom(testSector,'north')){
-            if(map.isFloor(testSector,'north')){
-              currentRoom.unmapped.push(map.getSector(testSector,'north'));
-              map.setRoom({x:testSector.x,y:testSector.y-1,id:-1});
-            }else if(map.isDoor(testSector,'north')){
-              currentRoom.doors.push(testSector);
-            } //end if
-          } //end if
-          if(map.isInbounds(testSector,'east')&&!map.getRoom(testSector,'east')){
-            if(map.isFloor(testSector,'east')){
-              currentRoom.unmapped.push(map.getSector(testSector,'east'));
-              map.setRoom({x:testSector.x+1,y:testSector.y,id:-1});
-            }else if(map.isDoor(testSector,'east')){
-              currentRoom.doors.push(testSector);
-            } //end if
-          } //end if
-          if(map.isInbounds(testSector,'south')&&!map.getRoom(testSector,'south')){
-            if(map.isFloor(testSector,'south')){
-              currentRoom.unmapped.push(map.getSector(testSector,'south'));
-              map.setRoom({x:testSector.x,y:testSector.y+1,id:-1});
-            }else if(map.isDoor(testSector,'south')){
-              currentRoom.doors.push(testSector);
-            } //end if
-          } //end if
-          testSector = currentRoom.unmapped.pop();
-        }while(testSector!==undefined);
-
-        // it's possible a room could have two of the same door, dedup
-        currentRoom.doors = currentRoom.doors
-          .filter((o,i,a)=>a.findIndex(t=>(t.x===o.x&&t.y===o.y))===i);
-
-        if(currentRoom.doors.length===2){
-          const startDoor = currentRoom.doors.pop(),
-                endDoor = currentRoom.doors.pop(),
-                [x1,y1,x2,y2] = [startDoor.x,startDoor.y,endDoor.x,endDoor.y];
-
-          currentRoom.sectors.forEach(({x,y})=> map.setEmpty({x,y}));
-          map.drunkenPath({
-            x1,y1,x2,y2,constrain:true,
-            draw(sector){
-              sector.setFloor();
-            }
-          });
         } //end if
+        if(map.isInbounds(testSector,'north')&&!map.getRoom(testSector,'north')){
+          if(map.isFloor(testSector,'north')){
+            currentRoom.unmapped.push(map.getSector(testSector,'north'));
+            map.setRoom({x:testSector.x,y:testSector.y-1,id:-1});
+          }else if(map.isDoor(testSector,'north')){
+            currentRoom.doors.push(testSector);
+          } //end if
+        } //end if
+        if(map.isInbounds(testSector,'east')&&!map.getRoom(testSector,'east')){
+          if(map.isFloor(testSector,'east')){
+            currentRoom.unmapped.push(map.getSector(testSector,'east'));
+            map.setRoom({x:testSector.x+1,y:testSector.y,id:-1});
+          }else if(map.isDoor(testSector,'east')){
+            currentRoom.doors.push(testSector);
+          } //end if
+        } //end if
+        if(map.isInbounds(testSector,'south')&&!map.getRoom(testSector,'south')){
+          if(map.isFloor(testSector,'south')){
+            currentRoom.unmapped.push(map.getSector(testSector,'south'));
+            map.setRoom({x:testSector.x,y:testSector.y+1,id:-1});
+          }else if(map.isDoor(testSector,'south')){
+            currentRoom.doors.push(testSector);
+          } //end if
+        } //end if
+        testSector = currentRoom.unmapped.pop();
+      }while(testSector!==undefined);
+      // it's possible a room could have two of the same door, dedup
+      currentRoom.doors = currentRoom.doors
+        .filter((o,i,a)=>a.findIndex(t=>(t.x===o.x&&t.y===o.y))===i);
+
+      if(currentRoom.doors.length===2){
+        const startDoor = currentRoom.doors.pop(),
+              endDoor = currentRoom.doors.pop(),
+              [x1,y1,x2,y2] = [startDoor.x,startDoor.y,endDoor.x,endDoor.y];
+
+        currentRoom.sectors.forEach(({x,y})=> map.setEmpty({x,y}));
+        map.drunkenPath({
+          x1,y1,x2,y2,constrain:true,
+          draw(sector){
+            sector.setFloor();
+          },
+          onFailureReattempt({x1,y1,x2,y2}){
+
+            // if we can't make it look random, lets just draw a straight line
+            return map.findPath({x1,y1,x2,y2});
+          }
+        });
       } //end if
-    });
+    } //end if
   });
 
   // now finally clean up doors. We don't need a door in the middle of a hallway
-  map.sectors.flat().filter(sector=> sector.isDoor())
+  map.sectors.getAll()
     .forEach(sector=>{
+      if(!sector.isDoor()) return;
       if(
-        map.isInbounds(sector,'north')&&map.isFloor(sector,'north')&&
-        map.isInbounds(sector,'south')&&map.isFloor(sector,'south')&&
+        map.isFloor(sector,'north')&&
+        map.isFloor(sector,'south')&&
         map.getNeighbors({
           sector: map.getSector(sector,'north'),
           orthogonal: false,
+          self: false,
           test(sector){
             return sector.isFloor();
           }
-        }).length===2&&
+        }).length===1&&
         map.getNeighbors({
           sector: map.getSector(sector,'south'),
           orthogonal: false,
+          self: false,
           test(sector){
             return sector.isFloor()
           }
-        }).length===2
+        }).length===1
       ){
         sector.setFloor();
       }else if(
-        map.isInbounds(sector,'west')&&map.isFloor(sector,'west')&&
-        map.isInbounds(sector,'east')&&map.isFloor(sector,'east')&&
+        map.isFloor(sector,'west')&&
+        map.isFloor(sector,'east')&&
         map.getNeighbors({
           sector: map.getSector(sector,'west'),
           orthogonal: false,
+          self: false,
           test(sector){
             return sector.isFloor();
           }
-        }).length===2&&
+        }).length===1&&
         map.getNeighbors({
           sector: map.getSector(sector,'east'),
           orthogonal: false,
+          self: false,
           test(sector){
             return sector.isFloor()
           }
-        }).length===2
+        }).length===1
       ){
         sector.setFloor();
       } //end if
     });
 
   // wallify the map
-  map.sectors.forEach(row=>{
-    row.forEach(sector=>{
-      if(!sector.isFloor()) return;
-      map.getNeighbors({
-        x: sector.x,y: sector.y,
-        test(sector){
-          return sector.isEmpty();
-        }
-      }).forEach(sector=> sector.setWall());
-    });
+  map.sectors.getAll().forEach(sector=>{
+    if(!sector.isFloor()) return;
+    map.getNeighbors({
+      x: sector.x,y: sector.y,
+      test(sector){
+        return sector.isEmpty();
+      }
+    }).forEach(sector=> sector.setWall());
   });
 } //end patternedRooms()

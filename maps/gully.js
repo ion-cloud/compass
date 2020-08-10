@@ -3,8 +3,9 @@ export function gully({map}){
         h = d?2:10,
         v = d?10:2;
 
-  map.sectors.forEach(row=>{
-    row.forEach(sector=>{
+  map.fillRect({
+    x1: map.startX, y1: map.startY, x2: map.width, y2: map.height,
+    draw(sector){
       const n = (1+map.noise.simplex2(sector.x/map.width*h,sector.y/map.height*v))/2;
 
       if(n<0.4){
@@ -14,7 +15,7 @@ export function gully({map}){
       }else{
         sector.setFloor();
       } //end if
-    });
+    }
   });
 
   // remove all but the largest gully

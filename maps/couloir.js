@@ -1,6 +1,7 @@
 export function couloir({map}){
-  map.sectors.forEach(row=>{
-    row.forEach(sector=>{
+  map.fillRect({
+    x1: map.startX, y1: map.startY, x2: map.width, y2: map.height,
+    draw(sector){
       const n = map.noise.simplex2(sector.x/map.width*5,sector.y/map.height*5);
 
       if(n<0.05&&Math.random()<0.1){
@@ -14,7 +15,7 @@ export function couloir({map}){
       }else{
         sector.setWall();
       } //end if
-    });
+    }
   });
 
   // clip all non-walkable parts of the map away

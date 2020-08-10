@@ -15,7 +15,7 @@ export function organizedRooms({map}){
   // We find the end of a hallway and recursively work backwards until
   // we find a door or more than one hallway directional path
   function removeDeadEnds(){
-    map.sectors.flat().forEach(sector=>{
+    map.sectors.getAll().forEach(sector=>{
       if(!sector.isFloorSpecial()) return; //short-circuit
       let neighbors = map.getNeighbors({
         sector,orthogonal:false,
@@ -181,49 +181,48 @@ export function organizedRooms({map}){
   function allocateRooms(){
     const minWidth=3,minHeight=3;
 
-    map.sectors.forEach((row,y)=>{
-      row.forEach((sector,x)=>{
-        if(sector.isEmpty()){
-          let freeX=new Set();
+    map.sectors.getAll().forEach(sector=>{
+      const {x,y} = sector;
+      if(sector.isEmpty()){
+        let freeX=new Set();
 
-          for(let i=x,sx=x;i>0&&i<map.width-2&&i-sx<=ROOMSIZE;i++){
-            if(map.isEmpty({x: i,y})){
-              freeX.add(i);
-            }else{
-              break;
-            } //end if
-          } //end for
-          if(freeX.size>=minWidth){
-            let freeY = new Set(),
-                intersectY=new Set();
+        for(let i=x,sx=x;i>0&&i<map.width-2&&i-sx<=ROOMSIZE;i++){
+          if(map.isEmpty({x: i,y})){
+            freeX.add(i);
+          }else{
+            break;
+          } //end if
+        } //end for
+        if(freeX.size>=minWidth){
+          let freeY = new Set(),
+              intersectY=new Set();
 
-            [...freeX].some((fx,fxIndex)=>{
-              intersectY.clear();
-              for(let i=y,sy=y;i>0&&i<map.height-2&&i-sy<=ROOMSIZE;i++){
-                if(map.isEmpty({x: fx,y: i})){
-                  if(fxIndex===0) freeY.add(i);
-                  if(fxIndex!==0) intersectY.add(i);
-                }else{
-                  break;
-                } //end if
-              } //end for
-              if(fxIndex>0){
-                freeY = new Set([...freeY].filter(o=>intersectY.has(o)));
-                if(freeY.size===0) return true;
+          [...freeX].some((fx,fxIndex)=>{
+            intersectY.clear();
+            for(let i=y,sy=y;i>0&&i<map.height-2&&i-sy<=ROOMSIZE;i++){
+              if(map.isEmpty({x: fx,y: i})){
+                if(fxIndex===0) freeY.add(i);
+                if(fxIndex!==0) intersectY.add(i);
+              }else{
+                break;
               } //end if
-              return false;
-            });
-            if(freeY.size>=minHeight){
-              fillRoom(
-                Math.min(...freeX),
-                Math.min(...freeY),
-                Math.max(...freeX),
-                Math.max(...freeY)
-              );
+            } //end for
+            if(fxIndex>0){
+              freeY = new Set([...freeY].filter(o=>intersectY.has(o)));
+              if(freeY.size===0) return true;
             } //end if
+            return false;
+          });
+          if(freeY.size>=minHeight){
+            fillRoom(
+              Math.min(...freeX),
+              Math.min(...freeY),
+              Math.max(...freeX),
+              Math.max(...freeY)
+            );
           } //end if
         } //end if
-      });
+      } //end if
     });
   } //end allocateRooms()
 
@@ -250,7 +249,7 @@ export function organizedRooms({map}){
 
   // Surround all floors traversable with walls
   function buildWalls(){
-    map.sectors.flat().forEach(sector=>{
+    map.sectors.getAll().forEach(sector=>{
       if(!sector.isEmpty()) return; //short-circuit
       if(
         sector.isEmpty()&&

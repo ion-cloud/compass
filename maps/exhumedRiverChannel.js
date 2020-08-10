@@ -26,8 +26,9 @@ export function exhumedRiverChannel({map}){
     }
   ]);
 
-  map.sectors.forEach(row=>{
-    row.forEach(sector=>{
+  map.fillRect({
+    x1: map.startX, y1: map.startY, x2: map.width, y2: map.height,
+    draw(sector){
       const n = (1+map.noise.simplex2(sector.x/map.width*10,sector.y/map.height*10))/2;
 
       if(n<0.6){
@@ -35,7 +36,7 @@ export function exhumedRiverChannel({map}){
       }else{
         sector.setWall();
       } //end if
-    });
+    }
   });
   map.clipOrphaned({
     test: sector=> sector.isWalkable()||sector.isEmpty(),
@@ -100,25 +101,46 @@ export function exhumedRiverChannel({map}){
   } //end if
 
   // now close everything not close enough to the exhumed channel
-  map.sectors.forEach(row=>{
-    row.forEach(sector=>{
-      if(map.isRect({
-        x1: sector.x-3,
-        y1: sector.y-3,
-        x2: sector.x+3,
-        y2: sector.y+3,
-        test(sector){
-          return sector.isWater();
-        }
-      })&&Math.random()<0.6){
-        sector.setWall();
-      }else if(!sector.isWater()&&Math.random()<0.1){
-        sector.setWallSpecial();
-      }else if(sector.isWater()){
-        sector.setFloorSpecial();
-      }else if(!sector.isWater()){
-        sector.setFloor();
+  const river = [];
+
+  map.fillRect({
+    x1: map.startX, y1: map.startY, x2: map.width, y2: map.height,
+    draw(sector){
+      if(sector.isWater()){
+        river.push(sector);
+        return; //short-circuit
       } //end if
+      if(Math.random()<0.1){
+        sector.setWallSpecial();
+      }else if(Math.random()<0.4){
+        sector.setWall();
+      } //end if
+    }
+  });
+
+  const finished = {};
+
+  river.forEach(({x,y})=>{
+    map.fillRect({
+      x1: x-6, y1: y-6, x2: x+6, y2: y+6,
+      test({x,y}){
+        return finished[`x${x}y${y}`]===undefined;
+      },
+      draw(sector){
+        const randomNumber = Math.random(),
+              {x,y} = sector;
+
+        finished[`x${x}y${y}`] = true;
+        if(sector.isWater()){
+          sector.setFloorSpecial();
+        }else if(randomNumber<0.1){
+          sector.setWallSpecial();
+        }else if(randomNumber<0.2){
+          sector.setWall();
+        }else{
+          sector.setFloor();
+        } //end if
+      }
     });
   });
 

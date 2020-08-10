@@ -1,7 +1,7 @@
 import './index.styl';
-import {Easel} from '@ion-cloud/core';
+import {EaselWebGL} from '@ion-cloud/core';
 import {Map,Sector,maps} from '../../index';
-export const easel = new Easel();
+export const easel = new EaselWebGL();
 
 // Launch application if easel was able to create a canvas,
 // if it wasn't then we know canvas isn't supported
@@ -18,46 +18,44 @@ if(!easel.activated){
 }else{
   noscript.style.display='none';
   const map = new Map({width:100,height:100}),
-        {generator} = maps.find(map=> map.name==='template - tunnels');
+        {generator} = maps.find(map=> map.name==='wadi');
 
-  for(let y=0;y<map.height;y++){
-    map.sectors[y]=[];
-    for(let x=0;x<map.width;x++){
-      map.sectors[y][x]=new Sector({x,y,map});
-    } //end for
-  } //end for
   generator({map});
+
   easel.onDraw = function(){
-    const rh = easel.viewport.h/map.height, rw = easel.viewport.w/map.width;
+    const h = 1/(map.height-1),
+          w = 1/(map.width-1),
+          l1 = 0.12,
+          l2 = 0.18,
+          l3 = 0.32;
 
-    map.sectors.forEach((row,y)=>{
-      row.forEach((sector,x)=>{
-        if(sector.isEmpty()||sector.isVoid()){
-          easel.ctx.fillStyle='#000';
-        }else if(sector.isRemoved()){
-          easel.ctx.fillStyle='#833';
-        }else if(sector.isDoor()){
-          easel.ctx.fillStyle='#b94';
-        }else if(sector.isWallSpecial()){
-          easel.ctx.fillStyle='#445';
-        }else if(sector.isWall()){
-          easel.ctx.fillStyle='#334';
-        }else if(sector.isWaterSpecial()){
-          easel.ctx.fillStyle='#339';
-        }else if(sector.isWater()){
-          easel.ctx.fillStyle='#33b';
-        }else if(sector.isFloorSpecial()){
-          easel.ctx.fillStyle='#563';
-        }else if(sector.isFloor()){
-          easel.ctx.fillStyle='#373';
-        }else{ //unknown
-          easel.ctx.fillStyle='#f00';
-        } //end if
+    let color;
 
-        // the -0.4 & +0.8 is to remove sub-pixel issues
-        // that might cause lines to appear between cells
-        easel.ctx.fillRect(x*rw+0.4,y*rh+0.4,rw+0.8,rh+0.8);
-      });
+    map.sectors.getAll().forEach(sector=>{
+      const {x,y} = sector;
+
+      if(sector.isEmpty()||sector.isVoid()){
+        color = [0.0,0.0,0.0,1.0];
+      }else if(sector.isRemoved()){
+        color = [l3,l1,l1,1.0];
+      }else if(sector.isDoor()){
+        color = [l3,l2,0.0,1.0];
+      }else if(sector.isWallSpecial()){
+        color = [l2,l2,l2,1.0];
+      }else if(sector.isWall()){
+        color = [l1,l1,l1,1.0];
+      }else if(sector.isWaterSpecial()){
+        color = [l1,l1,l2,1.0];
+      }else if(sector.isWater()){
+        color = [l2,l2,l3,1.0];
+      }else if(sector.isFloorSpecial()){
+        color = [l3,l3,l2,1.0];
+      }else if(sector.isFloor()){
+        color = [l2,l3,l2,1.0];
+      }else{ //unknown
+        color = [1.0,0.0,0.0,1.0];
+      } //end if
+      easel.fillRect({x:x/map.width,y:y/map.height,w,h,c:color});
     });
   };
   easel.redraw();

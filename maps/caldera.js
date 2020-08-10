@@ -32,8 +32,11 @@ export function caldera({map}){
 
   // now we'll create a map boundary that's fuzzy to contain
   // the player
-  map.sectors.forEach((row,y)=>{
-    row.forEach((sector,x)=>{
+  map.fillRect({
+    x1: map.startX, y1: map.startY, x2: map.width, y2: map.height,
+    draw(sector){
+      const {x,y} = sector;
+
       if(!sector.isEmpty()) return; //don't override
       const yd = Math.abs(y-map.height/2)/(map.height/2),
             xd = Math.abs(x-map.width/2)/(map.width/2),
@@ -57,8 +60,8 @@ export function caldera({map}){
       }else{
         sector.setFloor();
       } //end if
-    }); //end for
-  }); //end for
+    }
+  });
 
   // now that we've represented the map fully, lets find the largest walkable
   // space and fill in all the rest

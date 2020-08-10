@@ -1,8 +1,9 @@
 export function esker({map}){
 
   // start by making the eskers themselves
-  map.sectors.forEach(row=>{
-    row.forEach(sector=>{
+  map.fillRect({
+    x1: map.startX, y1: map.startY, x2: map.width, y2: map.height,
+    draw(sector){
       const {x,y} = sector;
 
       let n; // noise variable defines depth
@@ -32,38 +33,36 @@ export function esker({map}){
       }else{
         sector.setWallSpecial();
       } //end if
-    });
+    }
   });
 
   // now we'll populate some noise obstructions to make it interesting
   // we need to start by reseting the nosie map so it doesn't match
-  map.sectors.forEach(row=>{
-    row.forEach(sector=>{
-      const {x,y} = sector;
+  map.sectors.getAll().forEach(sector=>{
+    const {x,y} = sector;
 
-      let n; //noise variable defines depth
+    let n; //noise variable defines depth
 
-      // Weight: 1
-      // random noise map widght (large-sized)
-      n = (1+map.noise.simplex2(x/map.width*5,y/map.height*5))/2;
+    // Weight: 1
+    // random noise map widght (large-sized)
+    n = (1+map.noise.simplex2(x/map.width*5,y/map.height*5))/2;
 
-      // Weight: 1
-      // This weights things by how far from teh center of map they are
-      n += 1*((
-        Math.sqrt(Math.pow(map.width/2-x,2)+Math.pow(map.height/2-y,2))
-        /
-        Math.sqrt(Math.pow(map.width/2,2)+Math.pow(map.height/2,2))
-      ));
+    // Weight: 1
+    // This weights things by how far from teh center of map they are
+    n += 1*((
+      Math.sqrt(Math.pow(map.width/2-x,2)+Math.pow(map.height/2-y,2))
+      /
+      Math.sqrt(Math.pow(map.width/2,2)+Math.pow(map.height/2,2))
+    ));
 
-      n/=2;
+    n/=2;
 
-      // the noise is between 0 and 1
-      if(n>0.8){
-        sector.setWallSpecial()
-      }else if(n>0.68){
-        sector.setWall();
-      } //end if
-    });
+    // the noise is between 0 and 1
+    if(n>0.8){
+      sector.setWallSpecial()
+    }else if(n>0.68){
+      sector.setWall();
+    } //end if
   });
 
   // now remove all orphaned areas from map

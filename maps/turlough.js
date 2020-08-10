@@ -1,7 +1,9 @@
 export function turlough({map}){
-  map.sectors.forEach((row,y)=>{
-    row.forEach((sector,x)=>{
-      const yd = Math.abs(y-map.height/2)/(map.height/2),
+  map.fillRect({
+    x1: map.startX, y1: map.startY, x2: map.width, y2: map.height,
+    draw(sector){
+      const {x,y} = sector,
+            yd = Math.abs(y-map.height/2)/(map.height/2),
             xd = Math.abs(x-map.width/2)/(map.width/2),
             d = Math.sqrt(Math.pow(xd,2)+Math.pow(yd,2));
 
@@ -22,8 +24,8 @@ export function turlough({map}){
       }else{
         sector.setFloor();
       } //end if
-    }); //end for
-  }); //end for
+    }
+  });
 
   // finally we'll clean up unwalkable sections
   map.clipOrphaned({

@@ -1,5 +1,5 @@
-export const marshyDredge = {
-  name: 'marshy dredge',
+export const marsh = {
+  name: 'marsh',
   options: {
     doors:{
       ignore: 1,

@@ -1,6 +1,7 @@
 export function cliffs({map}){
-  map.sectors.forEach(row=>{
-    row.forEach(sector=>{
+  map.fillRect({
+    x1: map.startX, y1: map.startY, x2: map.width, y2: map.height,
+    draw(sector){
       const n1 = map.noise.perlin2(sector.x/map.width*12,sector.y/map.height*10),
             n1w = 1,
             n2 = map.noise.perlin2(sector.x/map.width*3,sector.y/map.height*3),
@@ -21,6 +22,6 @@ export function cliffs({map}){
       }else{
         sector.setFloor();
       } //end if
-    });
+    }
   });
-} //end function
+} //end cliffs()

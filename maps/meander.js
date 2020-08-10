@@ -147,8 +147,9 @@ export function meander({map}){
   // now we'll make the rest of the map look good
   const noise = new Noise();
 
-  map.sectors.forEach(row=>{
-    row.forEach(sector=>{
+  map.fillRect({
+    x1: map.startX, y1: map.startY, x2: map.width, y2: map.height,
+    draw(sector){
       const n = (1+map.noise.simplex2(sector.x/map.width*8,sector.y/map.height*8))/2,
             n2 = (1+noise.simplex2(sector.x/map.width*4,sector.y/map.height*4))/2;
 
@@ -167,7 +168,7 @@ export function meander({map}){
       }else if(n<0.2&&sector.isWater()){
         sector.setWaterSpecial();
       } //end if
-    });
+    }
   });
 
   map.clipOrphaned({

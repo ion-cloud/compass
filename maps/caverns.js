@@ -2,21 +2,21 @@
 function conwayGameOfLife(map,map2){
   let mooresNeighborhood;
 
-  map.sectors.forEach((row,y)=>{
-    row.forEach((sector,x)=>{
-      mooresNeighborhood=getMooresNeighborhood(map,map2,x,y);
-      if(map2.isFloor({x,y})){
-        if(mooresNeighborhood>=4){
-          map.setFloor({x,y});
-        }else{
-          map.setEmpty({x,y});
-        } //end if
-      }else if(mooresNeighborhood>=5){
+  map.sectors.getAll().forEach(sector=>{
+    const {x,y} = sector;
+
+    mooresNeighborhood=getMooresNeighborhood(map,map2,x,y);
+    if(map2.isFloor({x,y})){
+      if(mooresNeighborhood>=4){
         map.setFloor({x,y});
       }else{
         map.setEmpty({x,y});
       } //end if
-    });
+    }else if(mooresNeighborhood>=5){
+      map.setFloor({x,y});
+    }else{
+      map.setEmpty({x,y});
+    } //end if
   });
 } //end conwayGameOfLife()
 
@@ -38,8 +38,11 @@ function getMooresNeighborhood(map,map2,x,y){
 
 // Surround all floors traversable with walls
 function buildWalls(map){
-  map.sectors.forEach((row,y)=>{
-    row.forEach((sector,x)=>{
+  map.fillRect({
+    x1: map.startX, y1: map.startY, x2: map.width, y2: map.height,
+    draw(sector){
+      const {x,y} = sector;
+
       if(sector.isFloor()){
         if(map.isInbounds({x: x-1,y})&&map.isEmpty({x: x-1,y})){
           map.setWall({x: x-1,y});
@@ -66,7 +69,7 @@ function buildWalls(map){
           map.setWall({x: x+1,y: y-1});
         } //end if
       } //end if
-    });
+    }
   });
 } //end buildWalls()
 

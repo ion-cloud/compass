@@ -12,7 +12,7 @@ export const waterPoolSquare = {
 
     if(!map.isRect({
       x1,y1,x2,y2,
-      test:sector=>{
+      hasAll:sector=>{
         const {x,y} = sector;
 
         return sector.isEmpty()||(sector.isWall()||sector.isDoor())&&(

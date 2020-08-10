@@ -1,6 +1,7 @@
 export function mesa({map}){
-  map.sectors.forEach(row=>{
-    row.forEach(sector=>{
+  map.fillRect({
+    x1: map.startX, y1: map.startY, x2: map.width-1, y2: map.height-1,
+    draw(sector){
       const n1 = map.noise.perlin2(sector.x/map.width*12,sector.y/map.height*10),
             n2 = map.noise.perlin2(sector.x/map.width*6,sector.y/map.height*6),
             n = (n1+n2)/2;
@@ -14,7 +15,7 @@ export function mesa({map}){
       }else{
         sector.setWall();
       } //end if
-    });
+    }
   });
 
   // clip all non-walkable parts of the map away

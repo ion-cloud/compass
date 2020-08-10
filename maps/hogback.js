@@ -25,14 +25,15 @@ export function hogback({map}){
     points.push({x1: x1+xd, y1: y1+yd, x2: x2+xd, y2: y2+yd});
   }
 
-  map.sectors.forEach(row=>{
-    row.forEach(sector=>{
-      if(Math.random()<0.7){
+  map.fillRect({
+    x1: map.startX, y1: map.startY, x2: map.width, y2: map.height,
+    draw(sector){
+      if(Math.random()<0.6){
         sector.setFloor()
       }else{
         sector.setWall();
       } //end if
-    });
+    }
   });
   points.forEach(point=>{
     map.getNeighbors({x: point.x1,y: point.y1})
@@ -40,30 +41,58 @@ export function hogback({map}){
     map.getNeighbors({x: point.x2,y: point.y2})
       .forEach(sector=> sector.setFloor());
   });
+
+  const hogback = {};
+
   points.forEach(point=>{
     map.setFloorSpecial({x: point.x1,y: point.y1});
     map.setFloorSpecial({x: point.x2,y: point.y2});
-    map.findPath(point).forEach(sector=>{
-      if(!sector.type) return; //no path
-      map.getNeighbors({
-        x: sector.x, y: sector.y, self: true,
-        test(sector){
-          return !sector.isWallSpecial();
-        }
-      }).forEach(sector=>{
-        sector.setFloorSpecial();
+    map.bresenhamsLine({
+      ...point,
+      onEach({x,y}){
         map.getNeighbors({
-          x: sector.x,y: sector.y, size: 2,
+          x, y, self: true,
           test(sector){
-            return Math.random()<0.1&&!sector.isWallSpecial();
+            return !sector.isWallSpecial();
           }
         }).forEach(sector=>{
           sector.setFloorSpecial();
+          hogback[`x${sector.x}y${sector.y}`] = true;
+          map.getNeighbors({
+            x: sector.x,y: sector.y, size: 2,
+            test(sector){
+              return Math.random()<0.1&&!sector.isWallSpecial();
+            }
+          }).forEach(sector=>{
+            sector.setFloorSpecial();
+            hogback[`x${sector.x}y${sector.y}`] = true;
+          });
         });
-      });
-      if(Math.random()<0.8) sector.setWallSpecial();
+        if(Math.random()<0.8) map.setWallSpecial({x,y});
+      }
     });
   });
+
+  const finished = {};
+
+  Object.keys(hogback)
+    .forEach(key=>{
+      const [,x,y] = key.split(/x|y/g).map(n=>+n);
+
+      map.fillRect({
+        x1: x-3, y1: y-3, x2: x+3, y2: y+3,
+        test({x,y}){
+          return finished[`x${x}y${y}`]===undefined;
+        },
+        draw(sector){
+          const {x,y} = sector;
+
+          finished[`x${x}y${y}`] = true;
+          if(sector.isFloorSpecial()) return;
+          if(Math.random()<0.8) sector.setFloor();
+        }
+      });
+    });
 
   // remove all but the largest gully
   map.clipOrphaned({

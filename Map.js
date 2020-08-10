@@ -1,9 +1,10 @@
 import {Noise} from './Noise';
 import {Heap} from './Heap';
+import {SectorMap} from './SectorMap';
 
 export class Map{
   constructor({
-    width=50,height=50,sectors=[],noise=new Noise(Math.random())
+    width=50,height=50,sectors=new SectorMap(),noise=new Noise(Math.random())
   }={}){
     this.width = width;
     this.height = height;
@@ -26,18 +27,12 @@ export class Map{
       width: this.width,
       height: this.height,
       noise: this.noise,
-      sectors: this.sectors.map(row=>{
-        return row.map(sector=>{
-          return sector.clone();
-        });
-      }),
+      sectors: this.sectors.clone(),
       initialize: false
     });
   }
   reset(){
-    this.sectors.forEach(row=>{
-      row.forEach(sector=> sector.setEmpty());
-    });
+    this.sectors.reset();
   }
   static isTouching({x1=0,y1=0,x2=0,y2=0}={}){
     if(
@@ -84,7 +79,7 @@ export class Map{
   }
   getSector({x=0,y=0}={},direction){
     if(direction) ({x,y} = this.constructor.translate({x,y,direction}));
-    return this.sectors[y][x];
+    return this.sectors.get({x,y});
   }
 
   // test to make sure the points are within bounds of the map
@@ -389,7 +384,9 @@ export class Map{
   // will be applied to each sector in the path
   drunkenPath({
     x1=0,y1=0,x2=0,y2=0,wide=false,draw=()=>true,
-    constrain=false
+    constrain=false,
+    onFailureReattempt=()=>{},
+    onFailure=()=>{}
   }={}){
     const map = this.clone(),
           minX = Math.min(x1,x2),
@@ -401,34 +398,36 @@ export class Map{
 
     // randomly populate noise on a cloned map until there's a viable
     // path from x1,y1 to x2,y2
-    do{
-      map.sectors.forEach(row=>{
+    map.fillRect({
+      x1,y1,x2,y2,
+      draw(sector){
+        if(
+          Math.random()<0.7||
+          Math.abs(sector.x-x1)<3&&Math.abs(sector.y-y1)<3||
+          Math.abs(sector.x-x2)<3&&Math.abs(sector.y-y2)<3
+        ){
+          sector.setFloor();
+        }else{
+          sector.setWall();
+        } //end if
+      }
+    });
+    path = map.findPath({
+      x1,y1,x2,y2,map,
+      test(sector){
+        return sector.isWalkable()&&
+          sector.x>=minX&&sector.x<=maxX&&
+          sector.y>=minY&&sector.y<=maxY;
+      }
+    });
 
-        //eslint-disable-next-line complexity
-        row.forEach(sector=>{
-          if(
-            Math.random()<0.7||
-            Math.abs(sector.x-x1)<3&&Math.abs(sector.y-y1)<3||
-            Math.abs(sector.x-x2)<3&&Math.abs(sector.y-y2)<3
-          ){
-            sector.setFloor();
-          }else{
-            sector.setWall();
-          } //end if
-        });
-      });
-      path = map.findPath({
-        x1,y1,x2,y2,map,
-        test(sector){
-          return sector.isWalkable()&&
-            sector.x>=minX&&sector.x<=maxX&&
-            sector.y>=minY&&sector.y<=maxY;
-        }
-      });
-    }while(path===null)
+    // if the map input didn't allow a path, it's possible there's a failure
+    // in such cases lets allow an onFailure function so the caller can handle
+    // these cases
+    if(!path) path = onFailureReattempt({x1,y1,x2,y2});
 
     // now we'll draw the path between the points
-    path.forEach(sector=>{
+    (path||[]).forEach(sector=>{
       if(wide){
         map.getNeighbors({
           x: sector.x,y: sector.y,orthogonal: false,
@@ -441,6 +440,8 @@ export class Map{
         draw(this.getSector({x: sector.x,y: sector.y}));
       } //end if
     });
+
+    if(!path) onFailure({x1,y1,x2,y2});
   }
 
   // find a path between two points that passes the `test` function when applied
@@ -609,16 +610,20 @@ export class Map{
   }
 
   // test rect to see if `test(sector)` is true
-  isRect({x1=0,y1=0,x2=0,y2=0,test=()=>false}={}){
+  isRect({x1=0,y1=0,x2=0,y2=0,hasAll=()=>true,hasOne=()=>false}={}){
     const dx = x1<x2?1:-1, dy = y1<y2?1:-1;
 
     for(let y = y1;y!==y2+dy;y+=dy){
       for(let x = x1;x!==x2+dx;x+=dx){
+        const sector = this.getSector({x,y});
+
         if(
-          !this.isInbounds({x,y})||
-          this.isInbounds({x,y})&&!test(this.getSector({x,y}))
+          !this.isInbounds(sector)||
+          this.isInbounds(sector)&&!hasAll(sector)
         ){
           return false; //exit early
+        }else if(this.isInbounds(sector)&&hasOne(sector)){
+          return true;
         } //end if
       } //end for
     } //end for
@@ -631,8 +636,10 @@ export class Map{
 
     for(let y = y1;y!==y2+dy;y+=dy){
       for(let x = x1;x!==x2+dx;x+=dx){
-        if(this.isInbounds({x,y})&&test(this.getSector({x,y}))){
-          draw(this.getSector({x,y}));
+        const sector = this.getSector({x,y});
+
+        if(this.isInbounds(sector)&&test(sector)){
+          draw(sector);
         } //end if
       } //end for
     } //end for
@@ -743,73 +750,66 @@ export class Map{
 
     // we have to start by removing roomNumbers if they exist because
     // we run this function more than once
-    this.sectors.forEach(row=>{
-
-      //eslint-disable-next-line no-return-assign
-      row.forEach(sector=> sector.roomNumber = 0);
+    this.sectors.getAll().forEach(sector=>{
+      sector.roomNumber = 0;
     });
-    this.sectors.forEach((row,sectorY)=>{
-      row.forEach((sector,sectorX)=>{
-        if(test(sector)&&!sector.roomNumber){
-          locStats.cur++; locStats.val = 1; //init new room
-          let newLoc = {x:sectorX,y:sectorY,id: locStats.cur},
-              x, y;
+    this.sectors.getAll().forEach(sector=>{
+      const sectorX = sector.x,
+            sectorY = sector.y;
 
-          do{
-            ({x,y}=newLoc);
-            if(
-              this.isInbounds({x: x-1,y})&&!this.getRoom({x: x-1,y})&&
-              test(this.getSector({x: x-1,y}))
-            ){
-              unmapped.push({x: x-1, y});
-              this.setRoom({x: x-1,y,id: -1});
-            } //end if
-            if(
-              this.isInbounds({x,y: y-1})&&!this.getRoom({x,y: y-1})&&
-              test(this.getSector({x,y: y-1}))
-            ){
-              unmapped.push({x,y: y-1});
-              this.setRoom({x,y: y-1,id: -1});
-            } //end if
-            if(
-              this.isInbounds({x: x+1,y})&&!this.getRoom({x: x+1,y})&&
-              test(this.getSector({x: x+1,y}))
-            ){
-              unmapped.push({x: x+1, y});
-              this.setRoom({x: x+1,y,id: -1});
-            } //end if
-            if(
-              this.isInbounds({x,y: y+1})&&!this.getRoom({x,y: y+1})&&
-              test(this.getSector({x,y: y+1}))
-            ){
-              unmapped.push({x,y: y+1});
-              this.setRoom({x,y: y+1,id: -1});
-            } //end if
-            this.setRoom({x,y,id: locStats.cur});
-            locStats.val++;
-            if(locStats.val>locStats.max){
-              locStats.max=locStats.val;
-              locStats.num=locStats.cur;
-            } //end manage maximum mass
-            newLoc = unmapped.pop();
-          }while(newLoc!==undefined)
-        } //end if
-      });
+      if(test(sector)&&!sector.roomNumber){
+        locStats.cur++; locStats.val = 1; //init new room
+        let newLoc = {x:sectorX,y:sectorY,id: locStats.cur},
+            x, y;
+
+        do{
+          ({x,y}=newLoc);
+          if(
+            this.isInbounds({x: x-1,y})&&!this.getRoom({x: x-1,y})&&
+            test(this.getSector({x: x-1,y}))
+          ){
+            unmapped.push({x: x-1, y});
+            this.setRoom({x: x-1,y,id: -1});
+          } //end if
+          if(
+            this.isInbounds({x,y: y-1})&&!this.getRoom({x,y: y-1})&&
+            test(this.getSector({x,y: y-1}))
+          ){
+            unmapped.push({x,y: y-1});
+            this.setRoom({x,y: y-1,id: -1});
+          } //end if
+          if(
+            this.isInbounds({x: x+1,y})&&!this.getRoom({x: x+1,y})&&
+            test(this.getSector({x: x+1,y}))
+          ){
+            unmapped.push({x: x+1, y});
+            this.setRoom({x: x+1,y,id: -1});
+          } //end if
+          if(
+            this.isInbounds({x,y: y+1})&&!this.getRoom({x,y: y+1})&&
+            test(this.getSector({x,y: y+1}))
+          ){
+            unmapped.push({x,y: y+1});
+            this.setRoom({x,y: y+1,id: -1});
+          } //end if
+          this.setRoom({x,y,id: locStats.cur});
+          locStats.val++;
+          if(locStats.val>locStats.max){
+            locStats.max=locStats.val;
+            locStats.num=locStats.cur;
+          } //end manage maximum mass
+          newLoc = unmapped.pop();
+        }while(newLoc!==undefined)
+      } //end if
     });
-    this.sectors.forEach(row=>{
-      row.forEach(sector=>{
-        if(test(sector)&&sector.roomNumber!==locStats.num){
-          failure(sector);
-        }else if(test(sector)&&sector.roomNumber===locStats.num){
-          success(sector);
-        }else if(hardFailure){
-          hardFailure(sector);
-        } //end if
-      });
+    this.sectors.getAll().forEach(sector=>{
+      if(test(sector)&&sector.roomNumber!==locStats.num){
+        failure(sector);
+      }else if(test(sector)&&sector.roomNumber===locStats.num){
+        success(sector);
+      }else if(hardFailure){
+        hardFailure(sector);
+      } //end if
     });
   }
 }
-
-
-
-
