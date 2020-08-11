@@ -5,7 +5,7 @@ import {SectorMap} from './SectorMap';
 export class Map{
   constructor({
     width=50,height=50,startX=0,startY=0,
-    sectors=new SectorMap(),noise=new Noise(Math.random())
+    sectors=new SectorMap({map:this}),noise=new Noise(Math.random())
   }={}){
     this.width = width;
     this.height = height;
@@ -241,11 +241,11 @@ export class Map{
   }
   isSeen({x=0,y=0}={},direction){
     if(direction) ({x,y} = this.constructor.translate({x,y,direction}));
-    return this.isInbounds({x,y})&&this.getSector({x,y}).isSeen();
+    return this.getSector({x,y}).isSeen();
   }
   isVisible({x=0,y=0}={},direction){
     if(direction) ({x,y} = this.constructor.translate({x,y,direction}));
-    return this.isInbounds({x,y})&&this.getSector({x,y}).isVisible();
+    return this.getSector({x,y}).isVisible();
   }
   isOccupied({x=0,y=0}={},direction){
     if(direction) ({x,y} = this.constructor.translate({x,y,direction}));
@@ -302,7 +302,7 @@ export class Map{
       ){
         result.push('south');
       } //end if
-    }else if(this.isInbounds({x,y})){
+    }else{
       if(this.isVisible({x:x-1,y})) result.push('west');
       if(this.isVisible({x:x+1,y})) result.push('east');
       if(this.isVisible({x,y:y-1})) result.push('north');
@@ -569,7 +569,6 @@ export class Map{
     setVisible=()=>{},
     onStart=({state})=>{ state.visible = {}; },
     onTest=({x,y,state})=>{
-      if(!this.isInbounds({x,y})) return false;
       if(isTransparent({x,y,state})) setTransparent({x,y,state});
       if(isTranslucent({x,y,state})) setTranslucent({x,y,state});
       state.visible[`${x},${y}`]=true;

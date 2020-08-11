@@ -1,13 +1,14 @@
 import {Sector} from './Sector';
 
 export class SectorMap{
-  constructor(){
+  constructor({map}={}){
     this.list = {};
+    this.map = map;
   }
   get({x=0,y=0}={}){
     const key = `x${x}y${y}`;
 
-    if(!this.list.hasOwnProperty(key)) this.list[key] = new Sector({x,y});
+    if(!this.list.hasOwnProperty(key)) this.list[key] = new Sector({x,y,map:this.map});
     return this.list[key];
   }
   getAll(){
