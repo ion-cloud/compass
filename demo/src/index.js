@@ -1,6 +1,6 @@
 import './index.styl';
 import {EaselWebGL} from '@ion-cloud/core';
-import {Map,Sector,maps,BasicWebGLDisplay} from '../../index';
+import {Map,maps,BasicWebGLDisplay} from '../../index';
 
 const easel = new EaselWebGL(),
       map = new Map({width:100,height:100}),

@@ -10,7 +10,7 @@ Please see code example [here](https://github.com/ion-cloud/compass/blob/master/
 ## Usage
 ```
 import {EaselWebGL} from '@ion-cloud/easel';
-import {Map,Sector,maps,BasicWebGLDisplay} from '@ion-cloud/compass';
+import {Map,maps,BasicWebGLDisplay} from '@ion-cloud/compass';
 
 const easel = new EaselWebGL(),
       map = new Map({width:100,height:100}),
