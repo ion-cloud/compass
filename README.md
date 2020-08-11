@@ -8,6 +8,7 @@ Getting started is as easy as `npm i @ion-cloud/compass --save` and then `import
 Please see code example [here](https://github.com/ion-cloud/compass/blob/master/demo/src/index.js).
 
 ## Usage
+### WebGL Canvas
 ```
 import {EaselWebGL} from '@ion-cloud/easel';
 import {Map,maps,BasicWebGLDisplay} from '@ion-cloud/compass';
@@ -15,6 +16,20 @@ import {Map,maps,BasicWebGLDisplay} from '@ion-cloud/compass';
 const easel = new EaselWebGL(),
       map = new Map({width:100,height:100}),
       display = new BasicWebGLDisplay({easel,map}),
+      {generator} = maps.find(map=> map.name==='template - basic');
+
+generator({map});
+easel.onDraw = function(){ display.draw(); };
+easel.redraw();
+```
+### 2d Canvas
+```
+import {Easel} from '@ion-cloud/core';
+import {Map,maps,BasicDisplay} from '@ion-cloud/compass';
+
+const easel = new Easel(),
+      map = new Map({width:100,height:100}),
+      display = new BasicDisplay({easel,map}),
       {generator} = maps.find(map=> map.name==='template - basic');
 
 generator({map});
