@@ -43,23 +43,23 @@ export class Sector{
     return this.category.includes('door');
   }
   isDoorClosed(){
-    return this.category==='door-closed';
+    return this.category==='doorClosed';
   }
   isDoorOpen(){
-    return this.category === 'door-open';
+    return this.category === 'doorOpen';
   }
   setDoor(){
     if(Math.random()<0.5){
-      this.category = 'door-open';
+      this.category = 'doorOpen';
     }else{
-      this.category = 'door-closed';
+      this.category = 'doorClosed';
     } //end if
   }
   setDoorOpen(){
-    this.category = 'door-open';
+    this.category = 'doorOpen';
   }
   setDoorClosed(){
-    this.category = 'door-closed';
+    this.category = 'doorClosed';
   }
   isFloor(){
     return this.category === 'floor' || this.category === 'floorSpecial';
