@@ -5,7 +5,7 @@ import {Map,maps,BasicWebGLDisplay} from '../../index';
 const easel = new EaselWebGL(),
       map = new Map({width:100,height:100}),
       display = new BasicWebGLDisplay({easel,map}),
-      {generator} = maps.find(map=> map.name==='clustered rooms');
+      {generator} = maps.find(map=> map.name==='clustered rooms - long hallways');
 
 generator({map});
 easel.onDraw = function(){ display.draw(); };

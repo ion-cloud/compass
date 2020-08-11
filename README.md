@@ -38,8 +38,14 @@ easel.redraw();
 ```
 ## Examples
 ### Basic
-#### Clustered Rooms
-![Clustered Rooms](examples/example_clustered_rooms.png)
+#### Clustered Rooms - Default
+![Clustered Rooms](examples/example_clustered_rooms_default.png)
+#### Clustered Rooms - Small
+![Clustered Rooms](examples/example_clustered_rooms_small.png)
+#### Clustered Rooms - Large
+![Clustered Rooms](examples/example_clustered_rooms_large.png)
+#### Clustered Rooms - Long Hallways
+![Clustered Rooms](examples/example_clustered_rooms_long_hallways.png)
 #### Organized Rooms
 ![Organized Rooms](examples/example_organized_rooms.png)
 #### Patterned Rooms
