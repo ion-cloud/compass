@@ -1,6 +1,6 @@
 {
   "name": "@ion-cloud/compass",
-  "version": "1.9.1",
+  "version": "1.9.2",
   "description": "JavaScript mapping classes and random generation algorithms",
   "main": "index.js",
   "scripts": {
