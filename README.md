@@ -12,7 +12,7 @@ JavaScript mapping classes and random generation algorithms	JavaScript mapping c
     - [Clustered Rooms - Default](#clustered-rooms---default)
     - [Clustered Rooms - Small](#clustered-rooms---small)
     - [Clustered Rooms - Large](#clustered-rooms---large)
-    - [Clustered Rooms - Long Hallways](#clustered-rooms---long hallways)
+    - [Clustered Rooms - Long Hallways](#clustered-rooms---long-hallways)
     - [Organized Rooms](#organized-rooms)
     - [Patterned Rooms](#patterned-rooms)
   - [Templates](#templates)
