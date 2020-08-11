@@ -32,13 +32,20 @@ function getTargetCoordinates({x,y,direction,length,w=0,h=0}){
   return result;
 } //end getTargetCoordinates()
 
-export function clusteredRooms({map,retry=5}){
-  const nodes = [];
+export function clusteredRooms({
+  map,retry=5,
+  x1=map.startX,y1=map.startY,x2=map.width,y2=map.height
+}={}){
+  const nodes = [],
+        width = x2-x1,
+        height = y2-y1,
+        requiredRooms = width*height/Math.pow(maxRoomSize,2)/2;
 
-  let x=Math.floor(Math.random()*map.width/2)+Math.floor(map.width/4),
-      y=Math.floor(Math.random()*map.height/2)+Math.floor(map.height/4),
+  let x=x1+Math.floor(Math.random()*width/2)+Math.floor(width/4),
+      y=y1+Math.floor(Math.random()*height/2)+Math.floor(height/4),
       leafs = [], direction, target, path, rooms = 0;
 
+  console.log(x,y,x1,y1,x2,y2);
   nodes.push({x,y,direction: 'north'});
   nodes.push({x,y,direction: 'south'});
   nodes.push({x,y,direction: 'east'});
@@ -50,8 +57,7 @@ export function clusteredRooms({map,retry=5}){
     }else if(
       path&&path.length&&path.every(sector=>{
         return sector.isEmpty()&&map.isInbounds({
-          x: sector.x, y: sector.y, x1: 1, y1: 1,
-          x2: map.width-2, y2: map.height-2
+          x: sector.x, y: sector.y, x1,y1,x2,y2
         });
       })
     ){
@@ -84,7 +90,7 @@ export function clusteredRooms({map,retry=5}){
       computeWeight:sector=>sector.isEmpty()?3:sector.isFloor()?1:100
     });
     if(path) path.shift(); // remove the starting point
-  }while(nodes.length||leafs.length)
+  }while(rooms<requiredRooms&&(nodes.length||leafs.length))
 
   // before we quantify a failure, we need to ensure that all walkable
   // floor is accessible
@@ -93,9 +99,6 @@ export function clusteredRooms({map,retry=5}){
     failure: sector=> sector.setEmpty()
   });
 
-  // we require a certain percentage of the screen to be populated
-  // with rooms; otherwise we restart the process.
-  const requiredRooms = map.width*map.height/Math.pow(maxRoomSize,2)/2;
 
   // if we don't meet the requiredRooms and we still have retries left then
   // go ahead and retry; otherwise accept the current result
@@ -167,7 +170,7 @@ export function clusteredRooms({map,retry=5}){
               return sector.isEmpty()&&
                 map.isInbounds({
                   x: sector.x, y: sector.y,
-                  x1: 1, y1: 1, x2: map.width-2, y2: map.height-2
+                  x1, y1, x2, y2
                 })
             }
           })

@@ -4,10 +4,13 @@ import {SectorMap} from './SectorMap';
 
 export class Map{
   constructor({
-    width=50,height=50,sectors=new SectorMap(),noise=new Noise(Math.random())
+    width=50,height=50,startX=0,startY=0,
+    sectors=new SectorMap(),noise=new Noise(Math.random())
   }={}){
     this.width = width;
     this.height = height;
+    this.startX = startX;
+    this.startY = startY;
     this.noise = noise;
     this.sectors = sectors;
     this.rooms = [];
@@ -453,16 +456,17 @@ export class Map{
     const heuristic = (dx, dy) => dx + dy, //manhattan heuristic
           openList = new Heap([],(a,b)=> b.path.f-a.path.f>0),
           abs = Math.abs, //shorten reference
-          clone = this.clone(), //so we can mutate it and destroy it when done
+          touched = [], //list of sectors mutated so we can restore them
           SQRT2 = Math.SQRT2; //shorten reference
 
     if(!map.isInbounds({x:x1,y:y1})||!map.isInbounds({x:x2,y:y2})) return null;
-    let node = clone.getSector({x: x1,y: y1}); //acquire starting node
+    let node = this.getSector({x: x1,y: y1}); //acquire starting node
 
     // set the g and f value of the start node to be 0
     node.path = {g: 0, f: 0, opened: false, closed: false, parent: null};
 
     // push the start node into the open list
+    touched.push(node);
     openList.push(node);
     node.path.opened = true;
 
@@ -485,11 +489,12 @@ export class Map{
         path.push(map.getSector({x: x1,y: y1})); //add start node
 
         // pop from list to get path in order
+        touched.forEach(sector=> sector.path=null);
         return path.reverse();
       } //end if
 
       // get neighbours of the current node
-      const neighbors = clone.getNeighbors({
+      const neighbors = this.getNeighbors({
         x: node.x,y: node.y, orthogonal, test
       });
 
@@ -498,8 +503,11 @@ export class Map{
               x = neighbor.x,
               y = neighbor.y;
 
-        // inherit the new path or create the container object
-        neighbor.path=neighbor.path||{};
+        // ensure every neighbor we adjusted is added to touched list
+        if(!neighbor.path){
+          touched.push(neighbor);
+          neighbor.path = {};
+        } //end if
 
         // get the distance between current node and the neighbor
         // and calculate the next g score
@@ -529,6 +537,7 @@ export class Map{
     } // end while not open list empty
 
     // fail to find the path
+    touched.forEach(sector=> sector.path=null);
     return null;
   }
 
