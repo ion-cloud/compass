@@ -1,17 +1,22 @@
 export function glen({map}){
 
-  // draw a bunch of rivers going every which way
-  const {x1,y1,x2,y2}= map.constructor.getTerminalPoints({
-    x1: 0, y1: 0, x2: map.width-1, y2: map.height-1
-  });
+  (function drawRiver(){
+    // draw a bunch of rivers going every which way
+    const {x1,y1,x2,y2}= map.constructor.getTerminalPoints({
+      x1: 0, y1: 0, x2: map.width-1, y2: map.height-1
+    });
 
-  // now draw that river
-  map.drunkenPath({
-    x1,y1,x2,y2,wide: true,
-    draw(sector){
-      sector.setWater();
-    }
-  });
+    // now draw that river
+    map.drunkenPath({
+      x1,y1,x2,y2,wide: true,
+      draw(sector){
+        sector.setWater();
+      },
+      onFailure(){
+        drawRiver(); //reattempt until we have a success
+      }
+    });
+  })();
 
   // now close everything not close enough to river
   map.fillRect({
