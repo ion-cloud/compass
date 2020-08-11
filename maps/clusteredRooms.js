@@ -1,19 +1,6 @@
 const hallwayLengthMean = 5;
 const hallwayLengthSigma = 1.4; //standard deviation = sigma
-const minRoomSize = 2;
-const maxRoomSize = 5;
 const directions = ['north','south','east','west'];
-
-// Given a mean and standard deviation, compute a random length
-function getHallwayLength(){
-  const X = Math.random()*Math.PI*2,
-        Y = Math.random(),
-        r = hallwayLengthSigma*Math.sqrt(-2*Math.log(Y)),
-        //x = r*Math.cos(X)+hallwayLengthMean,
-        y = r*Math.sin(X)+hallwayLengthMean;
-
-  return y|0||1; //we're on a grid, can't have partial/0 hallway lengths
-} //end getHallwayLength()
 
 function getTargetCoordinates({x,y,direction,length,w=0,h=0}){
   const r = Math.random()<0.5?1:-1;
@@ -33,8 +20,9 @@ function getTargetCoordinates({x,y,direction,length,w=0,h=0}){
 } //end getTargetCoordinates()
 
 export function clusteredRooms({
-  map,retry=5,
-  x1=map.startX,y1=map.startY,x2=map.width,y2=map.height
+  map,x1=map.startX,y1=map.startY,x2=map.width,y2=map.height,
+  minRoomSize=3,maxRoomSize=5,
+  hallwayLengthMean=8,hallwayLengthSigma=1.4 //standard deviation
 }={}){
   const nodes = [],
         width = x2-x1,
@@ -45,7 +33,6 @@ export function clusteredRooms({
       y=y1+Math.floor(Math.random()*height/2)+Math.floor(height/4),
       leafs = [], direction, target, path, rooms = 0;
 
-  console.log(x,y,x1,y1,x2,y2);
   nodes.push({x,y,direction: 'north'});
   nodes.push({x,y,direction: 'south'});
   nodes.push({x,y,direction: 'east'});
@@ -57,7 +44,7 @@ export function clusteredRooms({
     }else if(
       path&&path.length&&path.every(sector=>{
         return sector.isEmpty()&&map.isInbounds({
-          x: sector.x, y: sector.y, x1,y1,x2,y2
+          x: sector.x, y: sector.y, x1:x1+2,y1:y1+2,x2:x2-2,y2:y2-2
         });
       })
     ){
@@ -99,17 +86,9 @@ export function clusteredRooms({
     failure: sector=> sector.setEmpty()
   });
 
-
-  // if we don't meet the requiredRooms and we still have retries left then
-  // go ahead and retry; otherwise accept the current result
-  if(rooms>requiredRooms){
-    removeDeadEnds();wallify();
-  }else if(!retry){
-    removeDeadEnds();wallify();
-  }else{
-    map.reset();
-    clusteredRooms({map,retry:retry-1});
-  } //end if
+  // clean up and throw the walls around walkables
+  removeDeadEnds();
+  wallify();
 
   function buildRooms(path){
     let rooms = 0;
@@ -170,7 +149,7 @@ export function clusteredRooms({
               return sector.isEmpty()&&
                 map.isInbounds({
                   x: sector.x, y: sector.y,
-                  x1, y1, x2, y2
+                  x1:y1+2, y1:y1+2, x2:x2-2, y2:y2-2
                 })
             }
           })
@@ -254,4 +233,15 @@ export function clusteredRooms({
       } //end if
     });
   } //end wallify()
+
+  // Given a mean and standard deviation, compute a random length
+  function getHallwayLength(){
+    const X = Math.random()*Math.PI*2,
+          Y = Math.random(),
+          r = hallwayLengthSigma*Math.sqrt(-2*Math.log(Y)),
+          //x = r*Math.cos(X)+hallwayLengthMean,
+          y = r*Math.sin(X)+hallwayLengthMean;
+
+    return y|0||1; //we're on a grid, can't have partial/0 hallway lengths
+  } //end getHallwayLength()
 } //end function

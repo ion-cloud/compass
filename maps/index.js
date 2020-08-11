@@ -45,6 +45,35 @@ export const maps = [
   {name: 'chine', generator: chine},
   {name: 'cliffs', generator: cliffs},
   {name: 'clustered rooms', generator: clusteredRooms},
+  {
+    name: 'clustered rooms - large',
+    generator({map,x1,y1,x2,y2}){
+      clusteredRooms({
+        map,x1,y1,x2,y2,
+        minRoomSize:3,maxRoomSize:8,
+        hallwayLengthMean:8
+      })
+    }
+  },
+  {
+    name: 'clustered rooms - long hallways',
+    generator({map,x1,y1,x2,y2}){
+      clusteredRooms({
+        map,x1,y1,x2,y2,
+        hallwayLengthMean:15
+      })
+    }
+  },
+  {
+    name: 'clustered rooms - small',
+    generator({map,x1,y1,x2,y2}){
+      clusteredRooms({
+        map,x1,y1,x2,y2,
+        minRoomSize:2,maxRoomSize:5,
+        hallwayLengthMean:5
+      })
+    }
+  },
   {name: 'couloir', generator: couloir},
   {name: 'cuesta', generator: cuesta},
   {name: 'draw', generator: draw},
