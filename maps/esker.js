@@ -1,16 +1,22 @@
+import {fillRect} from '../tools/fillRect';
+import {clipOrphaned} from '../tools/clipOrphaned';
+import {Noise} from '../Noise';
+
 export function esker({map}){
+  const noise = new Noise();
 
   // start by making the eskers themselves
-  map.fillRect({
+  fillRect({
+    map,
     x1: map.startX, y1: map.startY, x2: map.width, y2: map.height,
-    draw(sector){
+    onDraw(sector){
       const {x,y} = sector;
 
       let n; // noise variable defines depth
 
       // Weight: 2
       // random noise map weight (small-sized)
-      n = (1+map.noise.simplex2(x/map.width*10,y/map.height*10));
+      n = (1+noise.simplex2(x/map.width*10,y/map.height*10));
 
       // Weight: 1
       // this weights things by how close to the center of map they are
@@ -45,7 +51,7 @@ export function esker({map}){
 
     // Weight: 1
     // random noise map widght (large-sized)
-    n = (1+map.noise.simplex2(x/map.width*5,y/map.height*5))/2;
+    n = (1+noise.simplex2(x/map.width*5,y/map.height*5))/2;
 
     // Weight: 1
     // This weights things by how far from teh center of map they are
@@ -66,8 +72,9 @@ export function esker({map}){
   });
 
   // now remove all orphaned areas from map
-  map.clipOrphaned({
-    test: sector=> sector.isWalkable(),
-    failure: sector=> sector.setWall()
+  clipOrphaned({
+    map,
+    onTest: sector=> sector.isWalkable(),
+    onFailure: sector=> sector.setWall()
   })
 } //end function

@@ -1,8 +1,16 @@
+import {ExistenceMap} from '../ExistenceMap';
+import {surroundSectors} from '../tools/surroundSectors';
+import {fillRect} from '../tools/fillRect';
+import {drunkenPath} from '../tools/drunkenPath';
+import {shuffle} from '../utilities/shuffle';
+import {Noise} from '../Noise';
+
 export function alluvialFan({map}){
   const viableStartSectors = [],
         viableEndSectors = [],
         alluvialDistance = 15,
-        riverSectors = [];
+        noise = new Noise(Math.random()),
+        river = new ExistenceMap();
 
   let startSector,endSector,terminalSector,a1,a2,riverSuccess,mapSuccess;
 
@@ -12,7 +20,6 @@ export function alluvialFan({map}){
   generator:
   do{
     mapSuccess = false;
-
     // we keep generating continent maps until we get one where there's
     // land on the wall that a be a start of the stream and a water area
     // near the middle of the screen it can outlet into
@@ -20,13 +27,14 @@ export function alluvialFan({map}){
 
       // make sure we seed each time; otherwise we're just
       // generating the same failing map over and over
-      map.noise.seed();
+      noise.seed();
       viableStartSectors.length = 0;
       viableEndSectors.length = 0;
-      map.fillRect({
+      fillRect({
+        map,
         x1: map.startX, y1: map.startY, x2: map.width, y2: map.height,
-        draw(sector){
-          const n = (1+map.noise.simplex2(sector.x/map.width,sector.y/map.height))/2;
+        onDraw(sector){
+          const n = (1+noise.simplex2(sector.x/map.width,sector.y/map.height))/2;
 
           if(n<0.5){
             sector.setWall();
@@ -52,35 +60,33 @@ export function alluvialFan({map}){
         }
       });
     }while(!viableStartSectors.length||!viableEndSectors.length)
-
     // now get a drunken path between a random start and end sector
 
     // we continue looping until we find a stream that outlets far enough
     // from the edge of the screen and where the start and end sectors
     // are far enough from each other
     riverSuccess = false;
-    riverSectors.length = 0;
+    river.reset();
     terminalSector = null;
     do{
 
-      /*eslint-disable no-labels*/
       if(!viableStartSectors.length) continue generator;
       if(!viableEndSectors.length) continue generator;
-      /*eslint-enable no-labels*/
 
-      startSector = map.constructor.shuffle(viableStartSectors).pop();
-      endSector = map.constructor.shuffle(viableEndSectors).pop();
+      startSector = shuffle(viableStartSectors).pop();
+      endSector = shuffle(viableEndSectors).pop();
       a1 = Math.pow(endSector.x-startSector.x,2);
       a2 = Math.pow(endSector.y-startSector.y,2);
     }while(Math.sqrt(a1+a2)<=alluvialDistance*2)
-    map.drunkenPath({
+    drunkenPath({
+      map,
       x1: startSector.x, y1: startSector.y,
       x2: endSector.x, y2: endSector.y,
 
       //eslint-disable-next-line no-loop-func
-      draw(sector){
+      onDraw(sector){
         if(!terminalSector&&!sector.isWater()){
-          riverSectors.push(sector);
+          river.set(sector);
         }else if(!terminalSector){
           terminalSector = sector;
         } //end if
@@ -91,7 +97,6 @@ export function alluvialFan({map}){
     a2 = Math.pow(terminalSector.y-startSector.y,2);
     riverSuccess = Math.sqrt(a1+a2)>alluvialDistance*2;
   }while(!riverSuccess);
-
   // now we'll draw the actual alluvial fan
   const r = Math.floor(alluvialDistance/2), //radius
         sx = terminalSector.x-r, //start x
@@ -133,29 +138,14 @@ export function alluvialFan({map}){
       if(isNaN(foci)) map.setWater({x,y}); //center of circle
     } //end for
   } //end for
-  const finishedRiverSectors = [];
 
-  riverSectors.forEach(sector=>{
-    map.getNeighbors({
-      x: sector.x, y: sector.y, self: true,
-      test(sector){
-        const count = map.getNeighbors({
-          x: sector.x, y: sector.y, self: true,
-          test(sector){
-            return sector.isWater();
-          }
-        }).length;
-
-        return !count;
-      }
-    }).forEach(sector=> Math.random()<0.5?finishedRiverSectors.push(sector):null);
-  });
-  finishedRiverSectors.forEach((sector,i)=>{
-    sector.setWater();
-    if(i===finishedRiverSectors.length-1){
-      map.getNeighbors({
-        x: sector.x,y: sector.y, self: true
-      }).forEach(sector=> sector.setWater());
+  surroundSectors({
+    map,sectors:river,
+    onTest({x,y,originX,originY}){
+      return x===originX&&y===originY||Math.random()<0.5;
+    },
+    onDraw(sector){
+      sector.setWater()
     }
   });
 
@@ -163,9 +153,9 @@ export function alluvialFan({map}){
         h = d?7:10, //horizontal
         v = d?10:7; //vertical
 
-  map.noise.seed();
+  noise.seed();
   map.sectors.getAll().forEach(sector=>{
-    const n = (1+map.noise.simplex2(sector.x/map.width*h,sector.y/map.height*v))/2;
+    const n = (1+noise.simplex2(sector.x/map.width*h,sector.y/map.height*v))/2;
 
     if(n<0.6&&sector.isWall()&&Math.random()<0.4){
       sector.setFloor();

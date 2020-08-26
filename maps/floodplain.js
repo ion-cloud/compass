@@ -1,5 +1,12 @@
+import {clipOrphaned} from '../tools/clipOrphaned';
+import {drunkenPath} from '../tools/drunkenPath';
+import {getNeighbors} from '../tools/getNeighbors';
+import {fillRect} from '../tools/fillRect';
+import {Noise} from '../Noise';
+
 export function floodplain({map}){
-  const water = [];
+  const water = [],
+        noise = new Noise();
 
   let x1,y1,x2,y2,direction=Math.random();
 
@@ -49,12 +56,14 @@ export function floodplain({map}){
         y2 = map.height-1;
       } //end if
     } //end if
-    map.drunkenPath({
+    drunkenPath({
+      map,
       x1,y1,x2,y2,wide: true,
-      draw(sector){
-        map.getNeighbors({
+      onDraw(sector){
+        getNeighbors({
+          map,
           x: sector.x,y: sector.y, self: true, size: 2,
-          test(testSector){
+          onTest(testSector){
             if(testSector.x===sector.x&&testSector.y===sector.y){
               return true;
             }else if(Math.random()<0.7){
@@ -72,9 +81,10 @@ export function floodplain({map}){
 
   // now we'll surround water with sand
   water.forEach(sector=>{
-    map.getNeighbors({
+    getNeighbors({
+      map,
       x: sector.x,y: sector.y,
-      test(sector){
+      onTest(sector){
         return sector.isEmpty();
       }
     }).forEach(sector=> sector.setFloorSpecial());
@@ -84,10 +94,11 @@ export function floodplain({map}){
   const x=['horizontal','forward'].includes(direction)?6:12,
         y=['vertical','backward'].includes(direction)?6:12;
 
-  map.fillRect({
+  fillRect({
+    map,
     x1: map.startX, y1: map.startY, x2: map.width, y2: map.height,
-    draw(sector){
-      const n = (1+map.noise.simplex2(sector.x/map.width*x,sector.y/map.height*y))/2;
+    onDraw(sector){
+      const n = (1+noise.simplex2(sector.x/map.width*x,sector.y/map.height*y))/2;
 
       if(n<0.2&&!sector.isWater()){
         sector.setWallSpecial();
@@ -101,8 +112,9 @@ export function floodplain({map}){
     }
   });
 
-  map.clipOrphaned({
-    test: sector=> sector.isWalkable(),
-    failure: sector=> sector.setWallSpecial()
+  clipOrphaned({
+    map,
+    onTest: sector=> sector.isWalkable(),
+    onFailure: sector=> sector.setWallSpecial()
   });
 } //end function

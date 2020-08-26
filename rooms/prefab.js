@@ -1,5 +1,7 @@
 import {roomTranslateCoordinates} from '../utilities/roomTranslateCoordinates';
 import {isPrefabEntryDoor} from '../utilities/isPrefabEntryDoor';
+import {isRect} from '../tools/isRect';
+import {getNeighbors} from '../tools/getNeighbors';
 
 const charMap = {
   '.': 'setFloor',
@@ -21,8 +23,8 @@ export const prefab = {
     const doors = [],
           {width,height} = prefab.details;
 
-    if(!map.isRect({
-      x1,y1,x2,y2,
+    if(!isRect({
+      map, x1,y1,x2,y2,
       hasAll:sector=>{
         const {x,y} = sector;
 
@@ -74,9 +76,9 @@ export const prefab = {
       } //end if
 
       // gather neighbors that are currently empty
-      const neighbors =  map.getNeighbors({
-        x,y,orthogonal:false,
-        test(sector){
+      const neighbors =  getNeighbors({
+        map,x,y,orthogonal:false,
+        onTest(sector){
           return sector.isEmpty();
         }
       });

@@ -1,15 +1,21 @@
+import {getNeighbors} from '../tools/getNeighbors';
+import {clipOrphaned} from '../tools/clipOrphaned';
+import {drunkenPath} from '../tools/drunkenPath';
+import {getTerminalPoints} from '../tools/getTerminalPoints';
+import {fillRect} from '../tools/fillRect';
+
 export function ravine({map}){
   // now draw that river
   (function drawRiver(){
 
     // draw a bunch of rivers going every which way
-    const {x1,y1,x2,y2}= map.constructor.getTerminalPoints({
-      x1: 0, y1: 0, x2: map.width-1, y2: map.height-1
+    const {x1,y1,x2,y2}= getTerminalPoints({
+     map, x1: 0, y1: 0, x2: map.width-1, y2: map.height-1
     });
 
-    map.drunkenPath({
-      x1,y1,x2,y2,wide: true,
-      draw(sector){
+    drunkenPath({
+      map,x1,y1,x2,y2,wide: true,
+      onDraw(sector){
         sector.setWater();
       },
       onFailure(){
@@ -19,12 +25,12 @@ export function ravine({map}){
   })();
 
   // now close everything not close enough to river
-  map.fillRect({
-    x1: map.startX, y1: map.startY, x2: map.width, y2: map.height,
-    draw(sector){
+  fillRect({
+    map, x1: map.startX, y1: map.startY, x2: map.width, y2: map.height,
+    onDraw(sector){
       if(
-        !map.getNeighbors({
-          x: sector.x,y: sector.y, size: 2
+        !getNeighbors({
+          map, x: sector.x,y: sector.y, size: 2
         }).some(sector=> sector.isWater())
         &&Math.random()<0.6
       ){
@@ -37,10 +43,11 @@ export function ravine({map}){
 
   // now that we've represented the map fully, lets find the largest walkable
   // space and fill in all the rest
-  map.clipOrphaned({
-    test: sector=> sector.isWalkable()||sector.isEmpty(),
-    failure: sector=> sector.setWallSpecial(),
-    success: sector=>{
+  clipOrphaned({
+    map,
+    onTest: sector=> sector.isWalkable()||sector.isEmpty(),
+    onFailure: sector=> sector.setWallSpecial(),
+    onSuccess: sector=>{
       if(!sector.isWalkable()) sector.setFloor();
     }
   });
@@ -51,7 +58,7 @@ export function ravine({map}){
     if(sector.isWater()) return; //leave water alone
     const x = sector.x,y = sector.y;
 
-    if(map.getNeighbors({x,y}).some(sector=> sector.isWater())){
+    if(getNeighbors({map,x,y}).some(sector=> sector.isWater())){
       if(Math.random()<0.5) sector.setFloorSpecial();
     } //end if
   });

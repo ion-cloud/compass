@@ -1,10 +1,16 @@
-export function uvala({map}){
-  const sinkholes = [];
+import {getNeighbors} from '../tools/getNeighbors';
+import {clipOrphaned} from '../tools/clipOrphaned';
+import {fillRect} from '../tools/fillRect';
+import {Noise} from '../Noise';
 
-  map.fillRect({
-    x1: map.startX, y1: map.startY, x2: map.width, y2: map.height,
-    draw(sector){
-      const n = (1+map.noise.simplex2(sector.x/map.width*12,sector.y/map.height*12))/2;
+export function uvala({map}){
+  const sinkholes = [],
+        noise = new Noise();
+
+  fillRect({
+    map, x1: map.startX, y1: map.startY, x2: map.width, y2: map.height,
+    onDraw(sector){
+      const n = (1+noise.simplex2(sector.x/map.width*12,sector.y/map.height*12))/2;
 
       if(n<0.06){
         sector.setWaterSpecial();
@@ -20,13 +26,13 @@ export function uvala({map}){
   });
 
   sinkholes.forEach(sector=>{
-    map.getNeighbors({
-      x: sector.x, y: sector.y, size: 5,
-      test(sector){
+    getNeighbors({
+      map, x: sector.x, y: sector.y, size: 5,
+      onTest(sector){
         return sector.isWalkable();
       }
     }).forEach(sector=>{
-      const n = (1+map.noise.simplex2(sector.x/map.width*12,sector.y/map.height*12))/2;
+      const n = (1+noise.simplex2(sector.x/map.width*12,sector.y/map.height*12))/2;
 
       if(n<0.1){
         sector.setWater();
@@ -41,9 +47,9 @@ export function uvala({map}){
   });
 
   // finally we'll clean up unwalkable sections
-  map.clipOrphaned({
-    test: sector=> sector.isWalkable()||sector.isWater(),
-    failure: sector=> sector.setWallSpecial()/*,
-    hardFailure: sector=> sector.setWall()*/
+  clipOrphaned({
+    map,
+    onTest: sector=> sector.isWalkable()||sector.isWater(),
+    onFailure: sector=> sector.setWallSpecial()
   });
 } //end function

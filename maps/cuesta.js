@@ -1,3 +1,7 @@
+import {fillRoom} from '../tools/fillRoom';
+import {getNeighbors} from '../tools/getNeighbors';
+import {shuffle} from '../utilities/shuffle';
+
 // eslint-disable-next-line complexity
 export function cuesta({map}){
   let x=[
@@ -51,26 +55,28 @@ export function cuesta({map}){
       sparks.push({x,y: y+1}); hashmap[`${x}:${y+1}`]={x,y: y+1};
     } //end if
     if(sparks.length){
-      ({x,y} = map.constructor.shuffle(sparks).pop());
+      ({x,y} = shuffle(sparks).pop());
     }else{
-      ({x,y} = map.constructor.shuffle(Object.values(hashmap)).pop());
+      ({x,y} = shuffle(Object.values(hashmap)).pop());
     } //end if
   }while(filled<maxFilled);
 
   // surround the corridors that arent surrounded with walls yet with walls now.
-  map.fillRoom({
+  fillRoom({
+    map,
     x1: 0,y1: 0,x2: map.width-1,y2: map.height-1,
-    test(sector){
-      const nearbyWalkable = map.getNeighbors({
+    onTest(sector){
+      const nearbyWalkable = getNeighbors({
+        map,
         x: sector.x,y: sector.y,
-        test(sector){
+        onTest(sector){
           return sector.isWalkable();
         }
       }).length;
 
       return nearbyWalkable&&sector.isEmpty()?true:false;
     },
-    draw(sector){
+    onDraw(sector){
       sector.setWall();
     }
   });

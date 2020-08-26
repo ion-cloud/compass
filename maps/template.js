@@ -4,6 +4,8 @@ import {roomGetPossiblePrefabs} from '../utilities/roomGetPossiblePrefabs';
 import {takeWeighted} from '../utilities/takeWeighted';
 import {takeRandom} from '../utilities/takeRandom';
 import {GenericState} from '../utilities/GenericState';
+import {shuffle} from '../utilities/shuffle';
+import {clipOrphaned} from '../tools/clipOrphaned';
 
 // eslint-disable-next-line complexity
 export function template({map,name,options=null}={}){
@@ -26,12 +28,8 @@ export function template({map,name,options=null}={}){
     // by creating a room in the center of the entire map, else we will use
     // one of the starting points our last room left for us
     if(step!==1){
-      if(todo[0].priority){
-        next = todo.shift();
-      }else{
-        map.constructor.shuffle(todo);
-        next=todo.shift(); //now it's shuffled, take a todo off list and start
-      } //end if
+      shuffle(todo);
+      next=todo.shift(); //now it's shuffled, take a todo off list and start
       cx=next.x;
       cy=next.y;
       roomDirection=next.direction;
@@ -44,21 +42,20 @@ export function template({map,name,options=null}={}){
     if(buildRoom({room,x:cx,y:cy,roomDirection})){
       successfulRooms++;
     }else if(step>=1000&&successfulRooms<15||todo.length===0&&successfulRooms<15){
-      map.sectors.flat().forEach(sector=> sector.setEmpty());
+      map.reset();
       successfulRooms=1;
       step=0;
       cx = Math.floor(map.width/2);
       cy = Math.floor(map.height/2);
-    }else if(next.priority){
-      map.setWall({x:next.x,y:next.y});
     } //end if
   }while(todo.length>0&&step<500||step===0);
   if(options.doors&&options.doors.expand&&doors.length) doorExpand();
 
   // now remove unwalkable
-  map.clipOrphaned({
-    test: sector=> sector.isWalkable()||sector.isDoor(),
-    failure: sector=> sector.setWallSpecial()
+  clipOrphaned({
+    map,
+    onTest: sector=> sector.isWalkable()||sector.isDoor(),
+    onFailure: sector=> sector.setFloorSpecial()
   });
 
   // given a specified x and y coordinate, roomsize, direction and type
@@ -86,7 +83,7 @@ export function template({map,name,options=null}={}){
 
     // short-circuit
     if(!success) return false;
-    if(!prefab){
+    if(room.name!=='prefab origin'){
       map.setDoor({x,y});
       doors.push({x,y});
     } //end if
@@ -97,8 +94,7 @@ export function template({map,name,options=null}={}){
 
   function doorExpand(){
     doors.forEach(({x,y})=>{
-      map
-        .getNeighbors({x,y,size:options.doors.expand.size||1})
+      getNeighbors({map,x,y,size:options.doors.expand.size||1})
         .forEach(sector=>{
           if(Math.random()<options.doors.expand.chance){
             if(options.doors.expand.waterChance&&Math.random()<options.doors.expand.waterChance){
@@ -107,9 +103,10 @@ export function template({map,name,options=null}={}){
               sector.setFloor();
             } //end if
           } //end if
-          map.getNeighbors({
+          getNeighbors({
+            map,
             ...sector,
-            test(sector){
+            onTest(sector){
               return sector.isEmpty();
             }
           }).forEach(sector=> sector.setWall());

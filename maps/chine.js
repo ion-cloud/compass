@@ -1,15 +1,28 @@
+import {surroundSectors} from '../tools/surroundSectors';
+import {ExistenceMap} from '../ExistenceMap';
+import {clipOrphaned} from '../tools/clipOrphaned';
+import {fillRect} from '../tools/fillRect';
+
+function getChineLocation({map}={}){
+  const size = Math.min(map.width,map.height);
+
+  return Math.floor(size/4+Math.random()*(size/2));
+} //end getChineLocation()
+
 // eslint-disable-next-line complexity
 export function chine({map}){
   const xy = Math.random()<0.5,
         xQuarter = map.width/4, xHalf = xQuarter*2, x3Quarters = xQuarter*3,
         yQuarter = map.height/4, yHalf = yQuarter*2, y3Quarters = yQuarter*3,
+        chineLocation = getChineLocation({map}),
         s = 8; //waterfall size
 
   let r, //used to hold random variable
       x = xy?0:Math.floor(xQuarter+Math.random()*xHalf),
       y = !xy?0:Math.floor(yQuarter+Math.random()*yHalf),
       d = !x?'east':'south',
-      drawnWaterfall = false;
+      drawnWaterfall = false,
+      curLocation = 0;
 
   const p = d;
 
@@ -40,24 +53,26 @@ export function chine({map}){
     // then horizontally
     /* eslint-disable no-unused-expressions */
     if(d==='northeast'){
-      y--; map.isInbounds({x,y})&&map.setWater({x,y});
-      x++; map.isInbounds({x,y})&&map.setWater({x,y});
+      y--; !map.isWaterSpecial({x,y})&&map.setWater({x,y});
+      x++; !map.isWaterSpecial({x,y})&&map.setWater({x,y});
     }else if(d==='east'){
-      x++; map.isInbounds({x,y})&&map.setWater({x,y});
+      x++; !map.isWaterSpecial({x,y})&&map.setWater({x,y});
     }else if(d==='southeast'){
-      y++; map.isInbounds({x,y})&&map.setWater({x,y});
-      x++; map.isInbounds({x,y})&&map.setWater({x,y});
+      y++; !map.isWaterSpecial({x,y})&&map.setWater({x,y});
+      x++; !map.isWaterSpecial({x,y})&&map.setWater({x,y});
     }else if(d==='south'){
-      y++; map.isInbounds({x,y})&&map.setWater({x,y});
+      y++; !map.isWaterSpecial({x,y})&&map.setWater({x,y});
     }else if(d==='southwest'){
-      y++; map.isInbounds({x,y})&&map.setWater({x,y});
-      x--; map.isInbounds({x,y})&&map.setWater({x,y});
+      y++; !map.isWaterSpecial({x,y})&&map.setWater({x,y});
+      x--; !map.isWaterSpecial({x,y})&&map.setWater({x,y});
+    }else{
+      console.log('err',d);
     } //end if
     /* eslint-enable no-unused-expressions */
 
     // now if we're in the center of the map and the waterfall hasn't been
     // drawn then we can do that now
-    if(!drawnWaterfall&&x>xQuarter&&x<x3Quarters&&y>yQuarter&&y<y3Quarters){
+    if(!drawnWaterfall&&curLocation===chineLocation){
       const r = Math.floor(s/2), //radius
             sx = x-r, //start x
             ex = x+r, //end x
@@ -77,25 +92,28 @@ export function chine({map}){
           p1 = Math.pow(sa1,2)*Math.pow(Math.sin(theta),2);
           p2 = Math.pow(sa2,2)*Math.pow(Math.cos(theta),2);
           foci = (sa1*sa2)/Math.sqrt(p1+p2);
-          if(hypotenuse<(foci/4*3)) map.setWaterSpecial({x: i,y: j});
-          if(hypotenuse<foci&&Math.random()<0.7) map.setWaterSpecial({x: i,y: j});
+          if(hypotenuse<foci/4*3) map.setWaterSpecial({x: i,y: j});
+          if(hypotenuse<foci&&hypotenuse>foci/4*3&&Math.random()<0.4) map.setWater({x: i,y: j});
+          if(hypotenuse>foci/2&&hypotenuse<foci/4*3&&Math.random()<0.8) map.setWater({x: i,y: j});
+          if(hypotenuse<foci&&Math.random()<0.4) map.setWater({x: i,y: j});
+          if(i===x&&j===y) map.setWaterSpecial({x:i,y:j});
         } //end for
       } //end for
       drawnWaterfall=true;
     } //end if
-
+    curLocation++;
   }while(x!==map.width-1&&y!==map.height-1);
-
   // now close everything not close enough to river
-  const river = [];
+  const river = new ExistenceMap();
 
-  map.fillRect({
+  fillRect({
+    map,
     x1: map.startX, y1: map.startY, x2: map.width, y2: map.height,
-    draw(sector){
+    onDraw(sector){
       const {x,y} = sector;
 
       if(sector.isWater()||sector.isWaterSpecial()){
-        river.push(sector);
+        river.set(sector);
         return; //short-circuit
       } //end if
       if(Math.random()<0.1){
@@ -106,30 +124,21 @@ export function chine({map}){
     }
   });
 
-  const finished = {};
-
-  river.forEach(({x,y})=>{
-    map.fillRect({
-      x1: x-3, y1: y-3, x2: x+3, y2: y+3,
-      test({x,y}){
-        return finished[`x${x}y${y}`]===undefined;
-      },
-      draw(sector){
-        const {x,y} = sector;
-
-        finished[`x${x}y${y}`] = true;
-        if(sector.isWater()||sector.isWaterSpecial()) return;
-        if(Math.random()<0.9) sector.setFloor();
-      }
-    });
+  surroundSectors({
+    map,sectors:river,size:2,
+    onDraw(sector){
+      if(sector.isWater()||sector.isWaterSpecial()) return;
+      if(Math.random()<0.9) sector.setFloor();
+    }
   });
 
   // now that we've represented the map fully, lets find the largest walkable
   // space and fill in all the rest
-  map.clipOrphaned({
-    test: sector=> sector.isEmpty()||sector.isWalkable(),
-    failure: sector=> sector.setWallSpecial(),
-    success: sector=>{
+  clipOrphaned({
+    map,
+    onTest: sector=> sector.isEmpty()||sector.isWalkable(),
+    onFailure: sector=> sector.setWallSpecial(),
+    onSuccess: sector=>{
       if(sector.isEmpty()) sector.setFloor();
     }
   });

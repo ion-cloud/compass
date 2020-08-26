@@ -1,3 +1,6 @@
+import {fillRect} from '../tools/fillRect';
+import {clipOrphaned} from '../tools/clipOrphaned';
+
 // wikipedia.org/wiki/Conway%27s_Game_of_Life
 function conwayGameOfLife(map,map2){
   let mooresNeighborhood;
@@ -38,36 +41,23 @@ function getMooresNeighborhood(map,map2,x,y){
 
 // Surround all floors traversable with walls
 function buildWalls(map){
-  map.fillRect({
+  fillRect({
+    map,
     x1: map.startX, y1: map.startY, x2: map.width, y2: map.height,
-    draw(sector){
+    onDraw(sector){
       const {x,y} = sector;
 
-      if(sector.isFloor()){
-        if(map.isInbounds({x: x-1,y})&&map.isEmpty({x: x-1,y})){
-          map.setWall({x: x-1,y});
-        } //end if
-        if(map.isInbounds({x: x+1,y})&&map.isEmpty({x: x+1,y})){
-          map.setWall({x: x+1,y});
-        } //end if
-        if(map.isInbounds({x,y: y-1})&&map.isEmpty({x,y: y-1})){
-          map.setWall({x,y: y-1});
-        } //end if
-        if(map.isInbounds({x,y: y+1})&&map.isEmpty({x,y: y+1})){
-          map.setWall({x,y: y+1});
-        } //end if
-        if(map.isInbounds({x: x-1, y: y-1})&&map.isEmpty({x: x-1,y: y-1})){
-          map.setWall({x: x-1,y: y-1});
-        } //end if
-        if(map.isInbounds({x: x+1, y: y+1})&&map.isEmpty({x: x+1,y: y+1})){
-          map.setWall({x: x+1,y: y+1});
-        } //end if
-        if(map.isInbounds({x: x-1, y: y+1})&&map.isEmpty({x: x-1,y: y+1})){
-          map.setWall({x: x-1,y: y+1});
-        } //end if
-        if(map.isInbounds({x: x+1, y: y-1})&&map.isEmpty({x: x+1,y: y-1})){
-          map.setWall({x: x+1,y: y-1});
-        } //end if
+      if(x===map.startX||x===map.width-1||y===map.startY||y===map.height-1){
+        map.isFloor(sector)&&map.setWall({x,y});
+      }else if(sector.isFloor()){
+        map.isEmpty({x: x-1,y})&&map.setWall({x: x-1,y});
+        map.isEmpty({x: x+1,y})&&map.setWall({x: x+1,y});
+        map.isEmpty({x,y: y-1})&&map.setWall({x,y: y-1});
+        map.isEmpty({x,y: y+1})&&map.setWall({x,y: y+1});
+        map.isEmpty({x: x-1,y: y-1})&&map.setWall({x: x-1,y: y-1});
+        map.isEmpty({x: x+1,y: y+1})&&map.setWall({x: x+1,y: y+1});
+        map.isEmpty({x: x-1,y: y+1})&&map.setWall({x: x-1,y: y+1});
+        map.isEmpty({x: x+1,y: y-1})&& map.setWall({x: x+1,y: y-1});
       } //end if
     }
   });
@@ -86,9 +76,10 @@ export function caverns({map,density=0.55}){
     } //end for
   } //end for
   conwayGameOfLife(map,map2);
-  map.clipOrphaned({
-    test: sector=> sector.isWalkable(),
-    failure: sector=> sector.setEmpty()
+  clipOrphaned({
+    map,
+    onTest: sector=> sector.isWalkable(),
+    onFailure: sector=> sector.setEmpty()
   })
   buildWalls(map);
   return true;

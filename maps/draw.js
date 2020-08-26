@@ -1,3 +1,7 @@
+import {fillRect} from '../tools/fillRect';
+import {clipOrphaned} from '../tools/clipOrphaned';
+import {shuffle} from '../utilities/shuffle';
+
 class Spark{
   constructor(map,startNode,endNode,possibleNodes=[]){
     this.map = map; //will need to be able to speakt to map
@@ -65,13 +69,13 @@ export function draw({map}){
 
   // 25% chance to have no split rivers, 25% to have 1, 50% to have 2
   if(r<0.25){
-    t = map.constructor.shuffle(t);
+    t = shuffle(t);
     t.length = 2;
   }else if(r<0.85){
-    t = map.constructor.shuffle(t);
+    t = shuffle(t);
     t.length = 3;
   }else{
-    t = map.constructor.shuffle(t);
+    t = shuffle(t);
   } //end if
 
   // start the recursive sparks
@@ -81,9 +85,10 @@ export function draw({map}){
   // now close everything not close enough to river
   const river = [];
 
-  map.fillRect({
+  fillRect({
+    map,
     x1: map.startX, y1: map.startY, x2: map.width, y2: map.height,
-    draw(sector){
+    onDraw(sector){
       if(sector.isWater()){
         river.push(sector);
         return; //short-circuit
@@ -99,12 +104,13 @@ export function draw({map}){
   const finished = {};
 
   river.forEach(({x,y})=>{
-    map.fillRect({
+    fillRect({
+      map,
       x1: x-3, y1: y-3, x2: x+3, y2: y+3,
-      test({x,y}){
+      onTest({x,y}){
         return finished[`x${x}y${y}`]===undefined;
       },
-      draw(sector){
+      onDraw(sector){
         const {x,y} = sector;
 
         finished[`x${x}y${y}`] = true;
@@ -116,10 +122,11 @@ export function draw({map}){
 
   // now that we've represented the map fully, lets find the largest walkable
   // space and fill in all the rest
-  map.clipOrphaned({
-    test: sector=> sector.isWalkable()||sector.isEmpty(),
-    failure: sector=> sector.setWallSpecial(),
-    success: sector=>{
+  clipOrphaned({
+    map,
+    onTest: sector=> sector.isWalkable()||sector.isEmpty(),
+    onFailure: sector=> sector.setWallSpecial(),
+    onSuccess: sector=>{
       if(!sector.isWalkable()) sector.setFloor();
     }
   });

@@ -1,3 +1,11 @@
+import {shuffle} from '../utilities/shuffle';
+import {getNeighbors} from '../tools/getNeighbors';
+import {findPath} from '../tools/findPath';
+import {fillRect} from '../tools/fillRect';
+import {isRect} from '../tools/isRect';
+import {fillRoom} from '../tools/fillRoom';
+import {clipOrphaned} from '../tools/clipOrphaned';
+
 const hallwayLengthMean = 5;
 const hallwayLengthSigma = 1.4; //standard deviation = sigma
 const directions = ['north','south','east','west'];
@@ -21,7 +29,7 @@ function getTargetCoordinates({x,y,direction,length,w=0,h=0}){
 
 export function clusteredRooms({
   map,x1=map.startX,y1=map.startY,x2=map.width,y2=map.height,
-  minRoomSize=3,maxRoomSize=5,
+  minRoomSize=3,maxRoomSize=5,emptyWeight=3,floorWeight=1,otherWeight=20,
   hallwayLengthMean=8,hallwayLengthSigma=1.4 //standard deviation
 }={}){
   const nodes = [],
@@ -37,7 +45,7 @@ export function clusteredRooms({
   nodes.push({x,y,direction: 'south'});
   nodes.push({x,y,direction: 'east'});
   nodes.push({x,y,direction: 'west'});
-  map.constructor.shuffle(nodes);
+  shuffle(nodes);
   do{
     if(!direction){
       ({x,y,direction}=nodes.pop());
@@ -54,7 +62,7 @@ export function clusteredRooms({
       nodes.push({x,y,direction: 'east'});
       nodes.push({x,y,direction: 'west'});
       path.forEach(sector=> sector.isEmpty()?sector.setFloorSpecial():null);
-      map.constructor.shuffle(nodes);
+      shuffle(nodes);
       rooms += buildRooms(path.map(({x,y})=>({x,y})));
       leafs = [].concat(
         leafs,
@@ -72,18 +80,20 @@ export function clusteredRooms({
     }//end if
     length = getHallwayLength();
     target = getTargetCoordinates({x,y,direction,length});
-    path = map.findPath({
+    path = findPath({
+      map,
       x1:x,y1:y,x2:target.x,y2:target.y,
-      computeWeight:sector=>sector.isEmpty()?3:sector.isFloor()?1:100
+      computeWeight:sector=>sector.isEmpty()?emptyWeight:sector.isFloorSpecial()?floorWeight:otherWeight
     });
     if(path) path.shift(); // remove the starting point
   }while(rooms<requiredRooms&&(nodes.length||leafs.length))
 
   // before we quantify a failure, we need to ensure that all walkable
   // floor is accessible
-  map.clipOrphaned({
-    test: sector=> sector.isWalkable()||sector.isDoor(),
-    failure: sector=> sector.setEmpty()
+  clipOrphaned({
+    map,
+    onTest: sector=> sector.isWalkable()||sector.isDoor(),
+    onFailure: sector=> sector.setEmpty()
   });
 
   // clean up and throw the walls around walkables
@@ -94,8 +104,8 @@ export function clusteredRooms({
     let rooms = 0;
 
     while(path.length){
-      map.constructor.shuffle(path);
-      map.constructor.shuffle(directions);
+      shuffle(path);
+      shuffle(directions);
       const [ox,oy] = Object.values(path.pop());
 
       // sometimes a path has been closed, only try to build if we know
@@ -143,7 +153,8 @@ export function clusteredRooms({
 
         // if the area is empty then we can make the room
         if(
-          map.isRect({
+          isRect({
+            map,
             x1: x, y1: y, x2: t.x, y2: t.y,
             hasAll(sector){
               return sector.isEmpty()&&
@@ -154,12 +165,13 @@ export function clusteredRooms({
             }
           })
         ){
-          map.fillRoom({
+          fillRoom({
+            map,
             x1: x,y1: y,x2: t.x,y2: t.y,
-            floor(sector){
+            onFloor(sector){
               sector.setFloor();
             },
-            wall(sector){
+            onWall(sector){
               sector.setWall();
             }
           });
@@ -194,9 +206,10 @@ export function clusteredRooms({
   function removeDeadEnds(){
     map.sectors.getAll().forEach(sector=>{
       if(!sector.isFloorSpecial()) return; //short-circuit
-      let neighbors = map.getNeighbors({
+      let neighbors = getNeighbors({
+        map,
         sector,orthogonal:false,
-        test:sector=> sector.isFloorSpecial()||sector.isDoor()
+        onTest:sector=> sector.isFloorSpecial()||sector.isDoor()
       });
 
       if(neighbors.length>1) return; //short-circuit
@@ -209,9 +222,10 @@ export function clusteredRooms({
 
         current.setEmpty();
         current = next;
-        neighbors = map.getNeighbors({
+        neighbors = getNeighbors({
+          map,
           sector:current,orthogonal:false,
-          test:sector=> sector.isFloorSpecial()||sector.isDoor()
+          onTest:sector=> sector.isFloorSpecial()||sector.isDoor()
         });
       }while(neighbors.length===1)
     });
@@ -222,9 +236,10 @@ export function clusteredRooms({
     map.sectors.getAll().forEach(sector=>{
       if(!sector.isEmpty()&&!sector.isWall()) return; //short-circuit
       if(
-        map.getNeighbors({
+        getNeighbors({
+          map,
           sector,orthogonal:true,
-          test:sector=>sector.isWalkable()
+          onTest:sector=>sector.isWalkable()
         }).length
       ){
         sector.setWall();

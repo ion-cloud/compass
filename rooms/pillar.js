@@ -1,4 +1,7 @@
 import {roomGetUniqueExits} from '../utilities/roomGetUniqueExits';
+import {isRect} from '../tools/isRect';
+import {fillRect} from '../tools/fillRect';
+import {getNeighbors} from '../tools/getNeighbors';
 
 export const pillarSquare = {
   name: 'pillar square',
@@ -10,8 +13,8 @@ export const pillarSquare = {
       west: []
     };
 
-    if(!map.isRect({
-      x1,y1,x2,y2,
+    if(!isRect({
+      map,x1,y1,x2,y2,
       hasAll:sector=>{
         const {x,y} = sector;
 
@@ -23,9 +26,9 @@ export const pillarSquare = {
     const width = x2-x1,
           height = y2-y1;
 
-    map.fillRect({
-      x1,y1,x2,y2,
-      draw:sector=>{
+    fillRect({
+      map,x1,y1,x2,y2,
+      onDraw:sector=>{
         const {x,y} = sector;
 
         if(sector.isDoor()) return;
@@ -83,8 +86,8 @@ export const pillarCircle = {
             west: []
           };
 
-    if(!map.isRect({
-      x1,y1,x2,y2,
+    if(!isRect({
+      map,x1,y1,x2,y2,
       hasAll:sector=>{
         const {x,y} = sector;
 
@@ -96,9 +99,9 @@ export const pillarCircle = {
     const width = x2-x1,
           height = y2-y1;
 
-    map.fillRect({
-      x1,y1,x2,y2,
-      test:sector=>{
+    fillRect({
+      map,x1,y1,x2,y2,
+      onTest:sector=>{
         if(sector.isDoor()){
           failed.push(sector);
           return false;
@@ -122,7 +125,7 @@ export const pillarCircle = {
         failed.push(sector);
         return false;
       },
-      draw:sector=>{
+      onDraw:sector=>{
         const {x,y} = sector;
 
         if(width>=4&&height>=4){
@@ -161,8 +164,8 @@ export const pillarCircle = {
     failed.forEach(sector=>{
       if(
         sector.isEmpty()&&
-        map.getNeighbors({
-          sector,test:sector=>sector.isFloor()
+        getNeighbors({
+          map,sector,test:sector=>sector.isFloor()
         }).length
       ) sector.setWall();
     });

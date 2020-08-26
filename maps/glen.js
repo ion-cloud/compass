@@ -1,15 +1,21 @@
+import {drunkenPath} from '../tools/drunkenPath';
+import {getTerminalPoints} from '../tools/getTerminalPoints';
+import {fillRect} from '../tools/fillRect';
+import {clipOrphaned} from '../tools/clipOrphaned';
+
 export function glen({map}){
 
   (function drawRiver(){
     // draw a bunch of rivers going every which way
-    const {x1,y1,x2,y2}= map.constructor.getTerminalPoints({
+    const {x1,y1,x2,y2}= getTerminalPoints({
       x1: 0, y1: 0, x2: map.width-1, y2: map.height-1
     });
 
     // now draw that river
-    map.drunkenPath({
+    drunkenPath({
+      map,
       x1,y1,x2,y2,wide: true,
-      draw(sector){
+      onDraw(sector){
         sector.setWater();
       },
       onFailure(){
@@ -19,9 +25,10 @@ export function glen({map}){
   })();
 
   // now close everything not close enough to river
-  map.fillRect({
+  fillRect({
+    map,
     x1: map.startX, y1: map.startY, x2: map.width, y2: map.height,
-    draw(sector){
+    onDraw(sector){
       if(!sector.isWater()&&Math.random()<0.4){
         sector.setWall();
       }else if(!sector.isWater()&&Math.random()<0.1){
@@ -32,10 +39,11 @@ export function glen({map}){
 
   // now that we've represented the map fully, lets find the largest walkable
   // space and fill in all the rest
-  map.clipOrphaned({
-    test: sector=> sector.isWalkable()||sector.isEmpty(),
-    failure: sector=> sector.setWallSpecial(),
-    success: sector=>{
+  clipOrphaned({
+    map,
+    onTest: sector=> sector.isWalkable()||sector.isEmpty(),
+    onFailure: sector=> sector.setWallSpecial(),
+    onSuccess: sector=>{
       if(!sector.isWalkable()) sector.setFloor();
     }
   });

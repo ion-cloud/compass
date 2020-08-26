@@ -1,7 +1,11 @@
+import {getNeighbors} from '../tools/getNeighbors';
+import {clipOrphaned} from '../tools/clipOrphaned';
+import {fillRect} from '../tools/fillRect';
+
 export function tepui({map}){
-  map.fillRect({
-    x1: map.startX, y1: map.startY, x2: map.width, y2: map.height,
-    draw(sector){
+  fillRect({
+    map, x1: map.startX, y1: map.startY, x2: map.width, y2: map.height,
+    onDraw(sector){
       const {x,y} = sector,
             yd = Math.abs(y-map.height/2)/(map.height/2),
             xd = Math.abs(x-map.width/2)/(map.width/2),
@@ -19,9 +23,9 @@ export function tepui({map}){
   const todo = [];
 
   map.sectors.getAll().forEach(sector=>{
-    const nearby = map.getNeighbors({
-            x: sector.x,y: sector.y,
-            test(sector){
+    const nearby = getNeighbors({
+            map, x: sector.x,y: sector.y,
+            onTest(sector){
               return sector.isWall();
             }
           }).length,
@@ -36,19 +40,21 @@ export function tepui({map}){
   todo.forEach(sector=> sector.setFloorSpecial());
 
   // remove all but the center
-  map.clipOrphaned({
-    test: sector=> sector.isFloorSpecial(),
-    failure: sector=> sector.setVoid(),
-    success: sector=> sector.setFloor(),
-    hardFailure: sector=> sector.setVoid()
+  clipOrphaned({
+    map,
+    onTest: sector=> sector.isFloorSpecial(),
+    onFailure: sector=> sector.setVoid(),
+    onSuccess: sector=> sector.setFloor(),
+    onHardFailure: sector=> sector.setVoid()
   });
 
   const clone = map.clone();
 
   clone.sectors.getAll().forEach(sector=>{
-    const nearby = clone.getNeighbors({
+    const nearby = getNeighbors({
+      map: clone,
       x: sector.x,y: sector.y,orthogonal: false,
-      test(sector){
+      onTest(sector){
         return sector.isFloor()
       }
     }).length;

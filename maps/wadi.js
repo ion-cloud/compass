@@ -1,12 +1,20 @@
+import {fillRect} from '../tools/fillRect';
+import {clipOrphaned} from '../tools/clipOrphaned';
+import {drunkenPath} from '../tools/drunkenPath';
+import {Noise} from '../Noise';
+import {getNeighbors} from '../tools/getNeighbors';
+import {getTerminalPoints} from '../tools/getTerminalPoints';
+
 export function wadi({map}){
   const d = Math.random()<0.5,
         h = d?2:10,
-        v = d?10:2;
+        v = d?10:2,
+        noise = new Noise();
 
-  map.fillRect({
-    x1: map.startX, y1: map.startY, x2: map.width, y2: map.height,
-    draw(sector){
-      const n = (1+map.noise.simplex2(sector.x/map.width*h,sector.y/map.height*v))/2;
+  fillRect({
+    map, x1: map.startX, y1: map.startY, x2: map.width, y2: map.height,
+    onDraw(sector){
+      const n = (1+noise.simplex2(sector.x/map.width*h,sector.y/map.height*v))/2;
 
       if(n<0.5&&Math.random()<0.5){
         sector.setWall()
@@ -21,9 +29,10 @@ export function wadi({map}){
   });
 
   // now remove unwalkable
-  map.clipOrphaned({
-    test: sector=> sector.isWalkable(),
-    failure: sector=> sector.setWallSpecial()
+  clipOrphaned({
+    map,
+    onTest: sector=> sector.isWalkable(),
+    onFailure: sector=> sector.setWallSpecial()
   });
 
   // get the centroid of the open area and use it for center of river
@@ -35,17 +44,17 @@ export function wadi({map}){
         y2 = Math.floor(centroid.y/walkable.length);
 
   (function drawRiverStart(){
-    const {x1,y1}= map.constructor.getTerminalPoints({
-      x1: 0, y1: 0, x2, y2
+    const {x1,y1}= getTerminalPoints({
+      map, x1: 0, y1: 0, x2, y2
     });
 
-    map.drunkenPath({
-      x1,y1,x2,y2,wide: true,
-      draw(sector){
+    drunkenPath({
+      map,x1,y1,x2,y2,wide: true,
+      onDraw(sector){
         sector.setWater();
-        map.getNeighbors({
-          x: sector.x,y: sector.y,size: 2,
-          test(sector){
+        getNeighbors({
+          map, x: sector.x,y: sector.y,size: 2,
+          onTest(sector){
             return sector.isWalkable()&&!sector.isWater();
           }
         }).forEach(sector=> sector.setFloor());
@@ -56,17 +65,17 @@ export function wadi({map}){
     });
   })();
   (function drawRiverEnd(){
-    const {x1,y1}= map.constructor.getTerminalPoints({
-      x1: map.width-1, y1: map.height-1, x2, y2
+    const {x1,y1}= getTerminalPoints({
+      map, x1: map.width-1, y1: map.height-1, x2, y2
     });
 
-    map.drunkenPath({
-      x1, y1, x2, y2, wide: true,
-      draw(sector){
+    drunkenPath({
+      map, x1, y1, x2, y2, wide: true,
+      onDraw(sector){
         sector.setWater();
-        map.getNeighbors({
-          x: sector.x, y: sector.y,size: 2,
-          test(sector){
+        getNeighbors({
+          map, x: sector.x, y: sector.y,size: 2,
+          onTest(sector){
             return sector.isWalkable()&&!sector.isWater();
           }
         }).forEach(sector=> sector.setFloor());

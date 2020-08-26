@@ -1,3 +1,8 @@
+import {clipOrphaned} from '../tools/clipOrphaned';
+import {getNeighbors} from '../tools/getNeighbors';
+import {bresenhamsLine} from '../tools/bresenhamsLine';
+import {fillRect} from '../tools/fillRect';
+
 export function hogback({map}){
   const points = [],
         minD = 10,
@@ -25,9 +30,10 @@ export function hogback({map}){
     points.push({x1: x1+xd, y1: y1+yd, x2: x2+xd, y2: y2+yd});
   }
 
-  map.fillRect({
+  fillRect({
+    map,
     x1: map.startX, y1: map.startY, x2: map.width, y2: map.height,
-    draw(sector){
+    onDraw(sector){
       if(Math.random()<0.6){
         sector.setFloor()
       }else{
@@ -36,9 +42,9 @@ export function hogback({map}){
     }
   });
   points.forEach(point=>{
-    map.getNeighbors({x: point.x1,y: point.y1})
+    getNeighbors({map, x: point.x1,y: point.y1})
       .forEach(sector=> sector.setFloor());
-    map.getNeighbors({x: point.x2,y: point.y2})
+    getNeighbors({map, x: point.x2,y: point.y2})
       .forEach(sector=> sector.setFloor());
   });
 
@@ -47,20 +53,21 @@ export function hogback({map}){
   points.forEach(point=>{
     map.setFloorSpecial({x: point.x1,y: point.y1});
     map.setFloorSpecial({x: point.x2,y: point.y2});
-    map.bresenhamsLine({
+    bresenhamsLine({
+      map,
       ...point,
       onEach({x,y}){
-        map.getNeighbors({
-          x, y, self: true,
-          test(sector){
+        getNeighbors({
+          map, x, y, self: true,
+          onTest(sector){
             return !sector.isWallSpecial();
           }
         }).forEach(sector=>{
           sector.setFloorSpecial();
           hogback[`x${sector.x}y${sector.y}`] = true;
-          map.getNeighbors({
-            x: sector.x,y: sector.y, size: 2,
-            test(sector){
+          getNeighbors({
+            map, x: sector.x,y: sector.y, size: 2,
+            onTest(sector){
               return Math.random()<0.1&&!sector.isWallSpecial();
             }
           }).forEach(sector=>{
@@ -79,12 +86,12 @@ export function hogback({map}){
     .forEach(key=>{
       const [,x,y] = key.split(/x|y/g).map(n=>+n);
 
-      map.fillRect({
-        x1: x-3, y1: y-3, x2: x+3, y2: y+3,
-        test({x,y}){
+      fillRect({
+        map, x1: x-3, y1: y-3, x2: x+3, y2: y+3,
+        onTest({x,y}){
           return finished[`x${x}y${y}`]===undefined;
         },
-        draw(sector){
+        onDraw(sector){
           const {x,y} = sector;
 
           finished[`x${x}y${y}`] = true;
@@ -95,8 +102,9 @@ export function hogback({map}){
     });
 
   // remove all but the largest gully
-  map.clipOrphaned({
-    test: sector=> sector.isWalkable(),
-    failure: sector=> sector.setWallSpecial()
+  clipOrphaned({
+    map, 
+    onTest: sector=> sector.isWalkable(),
+    onFailure: sector=> sector.setWallSpecial()
   });
 } //end function

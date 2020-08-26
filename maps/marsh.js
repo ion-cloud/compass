@@ -1,8 +1,15 @@
+import {fillRect} from '../tools/fillRect';
+import {Noise} from '../Noise';
+import {clipOrphaned} from '../tools/clipOrphaned';
+
 export function marsh({map}){
-  map.fillRect({
+  const noise = new Noise();
+
+  fillRect({
+    map, 
     x1: map.startX, y1: map.startY, x2: map.width, y2: map.height,
-    draw(sector){
-      const n = (1+map.noise.simplex2(sector.x/map.width*2,sector.y/map.height*2))/2;
+    onDraw(sector){
+      const n = (1+noise.simplex2(sector.x/map.width*2,sector.y/map.height*2))/2;
 
       if(n<0.15){
         sector.setWaterSpecial();
@@ -20,8 +27,9 @@ export function marsh({map}){
     }
   });
 
-  map.clipOrphaned({
-    test: sector=> sector.isWalkable()||sector.isEmpty(),
-    failure: sector=> sector.setWallSpecial()
+  clipOrphaned({
+    map, 
+    onTest: sector=> sector.isWalkable()||sector.isEmpty(),
+    onFailure: sector=> sector.setWallSpecial()
   });
 } //end function

@@ -1,4 +1,7 @@
 import {roomGetUniqueExits} from '../utilities/roomGetUniqueExits';
+import {isRect} from '../tools/isRect';
+import {fillRect} from '../tools/fillRect';
+import {getNeighbors} from '../tools/getNeighbors';
 
 export const waterPoolSquare = {
   name: 'water pool square',
@@ -10,8 +13,8 @@ export const waterPoolSquare = {
       west: []
     };
 
-    if(!map.isRect({
-      x1,y1,x2,y2,
+    if(!isRect({
+      map,x1,y1,x2,y2,
       hasAll:sector=>{
         const {x,y} = sector;
 
@@ -20,9 +23,9 @@ export const waterPoolSquare = {
         );
       }
     })) return {success:false};
-    map.fillRect({
-      x1,y1,x2,y2,
-      draw:sector=>{
+    fillRect({
+      map,x1,y1,x2,y2,
+      onDraw:sector=>{
         const {x,y} = sector;
 
         if(sector.isDoor()) return;
@@ -67,9 +70,9 @@ export const waterPoolCircle = {
             west: []
           };
 
-    if(!map.isRect({
-      x1,y1,x2,y2,
-      test:sector=>{
+    if(!isRect({
+      map,x1,y1,x2,y2,
+      onTest:sector=>{
         const {x,y} = sector;
 
         return sector.isEmpty()||(sector.isWall()||sector.isDoor())&&(
@@ -77,9 +80,9 @@ export const waterPoolCircle = {
         );
       }
     })) return {success:false};
-    map.fillRect({
-      x1,y1,x2,y2,
-      test:sector=>{
+    fillRect({
+      map,x1,y1,x2,y2,
+      onTest:sector=>{
         if(sector.isDoor()){
           failed.push(sector);
           return false;
@@ -103,7 +106,7 @@ export const waterPoolCircle = {
         failed.push(sector);
         return false;
       },
-      draw:sector=>{
+      onDraw:sector=>{
         const {x,y} = sector,
               width = x2-x1, height = y2-y1,
               quarterX = width/4, quarterY = height/4,
@@ -128,8 +131,8 @@ export const waterPoolCircle = {
     failed.forEach(sector=>{
       if(
         sector.isEmpty()&&
-        map.getNeighbors({
-          sector,test:sector=>sector.isWalkable()
+        getNeighbors({
+          map,sector,test:sector=>sector.isWalkable()
         }).length
       ) sector.setWall();
     });

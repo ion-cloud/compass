@@ -1,3 +1,6 @@
+import {shuffle} from '../utilities/shuffle';
+import {clipOrphaned} from '../tools/clipOrphaned';
+
 export function butte({map}){
   const butteSize = map.width*map.height/5, //20%
         butte = [];
@@ -16,7 +19,7 @@ export function butte({map}){
     if(map.isEmpty({x: x+1,y})) sparks.push({x: x+1,y});
     if(map.isEmpty({x,y: y-1})) sparks.push({x,y: y-1});
     if(map.isEmpty({x,y: y+1})) sparks.push({x,y: y+1});
-    if(sparks.length) ({x,y}=map.constructor.shuffle(sparks).pop());
+    if(sparks.length) ({x,y}=shuffle(sparks).pop());
   }while(cSize<butteSize&&sparks.length)
 
   // now we'll create a map boundary that's fuzzy to contain
@@ -43,10 +46,11 @@ export function butte({map}){
   // now that we've represented the map fully, lets
   // find the largest walkable space and fill in all the
   // rest
-  map.clipOrphaned({
-    test: sector=> sector.isEmpty(),
-    failure: sector=> sector.setWall(),
-    success: sector=> sector.setFloor()
+  clipOrphaned({
+    map,
+    onTest: sector=> sector.isEmpty(),
+    onFailure: sector=> sector.setWall(),
+    onSuccess: sector=> sector.setFloor()
   });
 
   // now we'll mark the center of the butte for removal

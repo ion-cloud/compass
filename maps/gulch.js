@@ -1,12 +1,21 @@
+import {clipOrphaned} from '../tools/clipOrphaned';
+import {shuffle} from '../utilities/shuffle';
+import {fillRect} from '../tools/fillRect';
+import {Noise} from '../Noise';
+import {getNeighbors} from '../tools/getNeighbors';
+import {findPath} from '../tools/findPath';
+
 export function gulch({map}){
   const d = Math.random()<0.5,
         h = d?2:10,
-        v = d?10:2;
+        v = d?10:2,
+        noise = new Noise();
 
-  map.fillRect({
+  fillRect({
+    map,
     x1: map.startX, y1: map.startY, x2: map.width, y2: map.height,
-    draw(sector){
-      const n = (1+map.noise.simplex2(sector.x/map.width*h,sector.y/map.height*v))/2;
+    onDraw(sector){
+      const n = (1+noise.simplex2(sector.x/map.width*h,sector.y/map.height*v))/2;
 
       if(n<0.3&&Math.random()<0.4){
         sector.setWall()
@@ -21,12 +30,13 @@ export function gulch({map}){
   });
 
   // now remove unwalkable
-  map.clipOrphaned({
-    test: sector=> sector.isWalkable(),
-    failure: sector=> sector.setWallSpecial()
+  clipOrphaned({
+    map,
+    onTest: sector=> sector.isWalkable(),
+    onFailure: sector=> sector.setWallSpecial()
   });
 
-  const terminalPositions = map.constructor.shuffle([
+  const terminalPositions = shuffle([
     {
       xmin: 0,
       xmax: 0,
@@ -70,9 +80,10 @@ export function gulch({map}){
   const x2 = x, y2 = y;
 
   // now we'll draw the path between the points
-  map.findPath({
+  findPath({
+    map,
     x1,y1,x2,y2,
-    test(sector){
+    onTest(sector){
       return sector.isWalkable();
     }
   }).forEach(sector=> drawPath(map,sector));
@@ -95,13 +106,15 @@ function drawPath(map, sector){
   const x = sector.x, y = sector.y;
 
   map.setWater({x,y});
-  map.getNeighbors({
+  getNeighbors({
+    map,
     x, y, self: true, orthogonal: false,
     test(sector){
       return sector.isWalkable();
     }
   }).forEach(sector=> sector.setWater());
-  map.getNeighbors({
+  getNeighbors({
+    map,
     x, y, cardinal: false, size: 2,
     test(sector){
       return sector.isWalkable()&&!sector.isWater();
@@ -111,7 +124,8 @@ function drawPath(map, sector){
 
     // small chance to venture slightly further
     if(Math.random()<0.5){
-      map.getNeighbors({
+      getNeighbors({
+        map,
         x: sector.x, y: sector.y, size: 2,
         test(sector){
           return sector.isWalkable()&&

@@ -1,3 +1,5 @@
+import {getNeighbors} from '../tools/getNeighbors';
+
 const [WEST,EAST,NORTH,SOUTH] = [0,1,2,3],
       ROOMSIZE = 5; //can't be lower than 3, includes wall
 
@@ -17,9 +19,9 @@ export function organizedRooms({map}){
   function removeDeadEnds(){
     map.sectors.getAll().forEach(sector=>{
       if(!sector.isFloorSpecial()) return; //short-circuit
-      let neighbors = map.getNeighbors({
-        sector,orthogonal:false,
-        test:sector=> sector.isFloorSpecial()||sector.isDoor()
+      let neighbors = getNeighbors({
+        map,sector,orthogonal:false,
+        onTest:sector=> sector.isFloorSpecial()||sector.isDoor()
       });
 
       if(neighbors.length>1) return; //short-circuit
@@ -32,9 +34,9 @@ export function organizedRooms({map}){
 
         current.setEmpty();
         current = next;
-        neighbors = map.getNeighbors({
-          sector:current,orthogonal:false,
-          test:sector=> sector.isFloorSpecial()||sector.isDoor()
+        neighbors = getNeighbors({
+          map,sector:current,orthogonal:false,
+          onTest:sector=> sector.isFloorSpecial()||sector.isDoor()
         });
       }while(neighbors.length===1)
     });
@@ -253,9 +255,9 @@ export function organizedRooms({map}){
       if(!sector.isEmpty()) return; //short-circuit
       if(
         sector.isEmpty()&&
-        map.getNeighbors({
-          sector,orthogonal:true,
-          test:sector=>sector.isWalkable()
+        getNeighbors({
+          map,sector,orthogonal:true,
+          onTest:sector=>sector.isWalkable()
         }).length
       ){
         sector.setWall();

@@ -1,3 +1,8 @@
+import {fillRect} from '../tools/fillRect';
+import {drunkenPath} from '../tools/drunkenPath';
+import {findPath} from '../tools/findPath';
+import {getNeighbors} from '../tools/getNeighbors';
+
 // These three constants control the size of the rooms
 const minSize = 2;
 const maxSize = 8;
@@ -52,9 +57,9 @@ class Partition{
       }else{ //can't split horizontally, too small - close nodes
         this.left = {closed: true};
         this.right = {closed: true};
-        this.map.fillRect({
-          x1:this.x1,y1:this.y1,x2:this.x2-1,y2:this.y2-1,
-          draw:sector=>sector.setFloor()
+        fillRect({
+          map:this.map,x1:this.x1,y1:this.y1,x2:this.x2-1,y2:this.y2-1,
+          onDraw:sector=>sector.setFloor()
         });
       } //end if
 
@@ -67,9 +72,9 @@ class Partition{
     }else{ //can't split vertically, too small - close nodes
       this.left = {closed: true};
       this.right = {closed: true};
-      this.map.fillRect({
-        x1:this.x1,y1:this.y1,x2:this.x2-1,y2:this.y2-1,
-        draw:sector=>sector.setFloor()
+      fillRect({
+        map:this.map,x1:this.x1,y1:this.y1,x2:this.x2-1,y2:this.y2-1,
+        onDraw:sector=>sector.setFloor()
       });
     } //end if
   }
@@ -179,15 +184,15 @@ export function patternedRooms({map}){
               [x1,y1,x2,y2] = [startDoor.x,startDoor.y,endDoor.x,endDoor.y];
 
         currentRoom.sectors.forEach(({x,y})=> map.setEmpty({x,y}));
-        map.drunkenPath({
-          x1,y1,x2,y2,constrain:true,
-          draw(sector){
+        drunkenPath({
+          map,x1,y1,x2,y2,constrain:true,
+          onDraw(sector){
             sector.setFloor();
           },
           onFailureReattempt({x1,y1,x2,y2}){
 
             // if we can't make it look random, lets just draw a straight line
-            return map.findPath({x1,y1,x2,y2});
+            return findPath({map,x1,y1,x2,y2});
           }
         });
       } //end if
@@ -201,19 +206,19 @@ export function patternedRooms({map}){
       if(
         map.isFloor(sector,'north')&&
         map.isFloor(sector,'south')&&
-        map.getNeighbors({
-          sector: map.getSector(sector,'north'),
+        getNeighbors({
+          map,sector: map.getSector(sector,'north'),
           orthogonal: false,
           self: false,
-          test(sector){
+          onTest(sector){
             return sector.isFloor();
           }
         }).length===1&&
-        map.getNeighbors({
-          sector: map.getSector(sector,'south'),
+        getNeighbors({
+          map,sector: map.getSector(sector,'south'),
           orthogonal: false,
           self: false,
-          test(sector){
+          onTest(sector){
             return sector.isFloor()
           }
         }).length===1
@@ -222,19 +227,19 @@ export function patternedRooms({map}){
       }else if(
         map.isFloor(sector,'west')&&
         map.isFloor(sector,'east')&&
-        map.getNeighbors({
-          sector: map.getSector(sector,'west'),
+        getNeighbors({
+          map,sector: map.getSector(sector,'west'),
           orthogonal: false,
           self: false,
-          test(sector){
+          onTest(sector){
             return sector.isFloor();
           }
         }).length===1&&
-        map.getNeighbors({
-          sector: map.getSector(sector,'east'),
+        getNeighbors({
+          map,sector: map.getSector(sector,'east'),
           orthogonal: false,
           self: false,
-          test(sector){
+          onTest(sector){
             return sector.isFloor()
           }
         }).length===1
@@ -246,9 +251,9 @@ export function patternedRooms({map}){
   // wallify the map
   map.sectors.getAll().forEach(sector=>{
     if(!sector.isFloor()) return;
-    map.getNeighbors({
-      x: sector.x,y: sector.y,
-      test(sector){
+    getNeighbors({
+      map,x: sector.x,y: sector.y,
+      onTest(sector){
         return sector.isEmpty();
       }
     }).forEach(sector=> sector.setWall());

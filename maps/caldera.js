@@ -1,3 +1,7 @@
+import {shuffle} from '../utilities/shuffle';
+import {clipOrphaned} from '../tools/clipOrphaned';
+import {fillRect} from '../tools/fillRect';
+
 export function caldera({map}){
   const calderaSize = map.width*map.height/10,
         sparks = [],
@@ -27,14 +31,15 @@ export function caldera({map}){
     if(map.isInbounds({x, y: y+1})&&map.isEmpty({x,y: y+1})){
       sparks.push({x,y: y+1});
     } //end if
-    if(sparks.length) ({x,y}=map.constructor.shuffle(sparks).pop());
+    if(sparks.length) ({x,y}=shuffle(sparks).pop());
   }while(size<calderaSize&&sparks.length)
 
   // now we'll create a map boundary that's fuzzy to contain
   // the player
-  map.fillRect({
+  fillRect({
+    map,
     x1: map.startX, y1: map.startY, x2: map.width, y2: map.height,
-    draw(sector){
+    onDraw(sector){
       const {x,y} = sector;
 
       if(!sector.isEmpty()) return; //don't override
@@ -65,10 +70,11 @@ export function caldera({map}){
 
   // now that we've represented the map fully, lets find the largest walkable
   // space and fill in all the rest
-  map.clipOrphaned({
-    test: sector=> sector.isWalkable()||sector.isEmpty(),
-    failure: sector=> sector.setWallSpecial(),
-    success: sector=>{
+  clipOrphaned({
+    map,
+    onTest: sector=> sector.isWalkable()||sector.isEmpty(),
+    onFailure: sector=> sector.setWallSpecial(),
+    onSuccess: sector=>{
       if(!sector.isWalkable()) sector.setFloor();
     }
   });

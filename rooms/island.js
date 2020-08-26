@@ -1,4 +1,7 @@
 import {roomGetUniqueExits} from '../utilities/roomGetUniqueExits';
+import {isRect} from '../tools/isRect';
+import {fillRect} from '../tools/fillRect';
+import {getNeighbors} from '../tools/getNeighbors';
 
 export const islandSquare = {
   name: 'island square',
@@ -10,8 +13,8 @@ export const islandSquare = {
       west: []
     };
 
-    if(!map.isRect({
-      x1,y1,x2,y2,
+    if(!isRect({
+      map,x1,y1,x2,y2,
       hasAll:sector=>{
         const {x,y} = sector;
 
@@ -20,9 +23,9 @@ export const islandSquare = {
         );
       }
     })) return {success:false};
-    map.fillRect({
-      x1,y1,x2,y2,
-      draw:sector=>{
+    fillRect({
+      map,x1,y1,x2,y2,
+      onDraw:sector=>{
         const {x,y} = sector;
 
         if(sector.isDoor()) return;
@@ -67,8 +70,8 @@ export const islandCircle = {
             west: []
           };
 
-    if(!map.isRect({
-      x1,y1,x2,y2,
+    if(!isRect({
+      map,x1,y1,x2,y2,
       hasAll:sector=>{
         const {x,y} = sector;
 
@@ -77,9 +80,9 @@ export const islandCircle = {
         );
       }
     })) return {success:false};
-    map.fillRect({
-      x1,y1,x2,y2,
-      test:sector=>{
+    fillRect({
+      map,x1,y1,x2,y2,
+      onTest:sector=>{
         if(sector.isDoor()){
           failed.push(sector);
           return false;
@@ -128,8 +131,8 @@ export const islandCircle = {
     failed.forEach(sector=>{
       if(
         sector.isEmpty()&&
-        map.getNeighbors({
-          sector,test:sector=>sector.isWalkable()
+        getNeighbors({
+          map, sector,test:sector=>sector.isWalkable()
         }).length
       ) sector.setWall();
     });

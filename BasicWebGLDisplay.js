@@ -11,6 +11,7 @@ const l0 = 0.0, l1 = 0.12, l2 = 0.18, l3 = 0.32, l4 = 1.0, //shade levels
         floor: [l2,l3,l2,l4],
         floorSpecial: [l3,l3,l2,l4],
         window: [l3,l1,l3,l4],
+        void: [l4,l4,l4,l4],
         default: [l4,l0,l0,l4]
       },
       colorHandler = {

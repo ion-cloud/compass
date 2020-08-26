@@ -1,13 +1,19 @@
+import {fillRect} from '../tools/fillRect';
+import {clipOrphaned} from '../tools/clipOrphaned';
+import {Noise} from '../Noise';
+
 export function turlough({map}){
-  map.fillRect({
-    x1: map.startX, y1: map.startY, x2: map.width, y2: map.height,
-    draw(sector){
+  const noise = new Noise();
+
+  fillRect({
+    map, x1: map.startX, y1: map.startY, x2: map.width, y2: map.height,
+    onDraw(sector){
       const {x,y} = sector,
             yd = Math.abs(y-map.height/2)/(map.height/2),
             xd = Math.abs(x-map.width/2)/(map.width/2),
             d = Math.sqrt(Math.pow(xd,2)+Math.pow(yd,2));
 
-      let n = (1+map.noise.simplex2(sector.x/map.width*3,sector.y/map.height*3))/2;
+      let n = (1+noise.simplex2(sector.x/map.width*3,sector.y/map.height*3))/2;
 
       // d turns it into a circle
       n=(n+d)/2;
@@ -28,8 +34,9 @@ export function turlough({map}){
   });
 
   // finally we'll clean up unwalkable sections
-  map.clipOrphaned({
-    test: sector=> sector.isWalkable(),
-    failure: sector=> sector.setWallSpecial()
+  clipOrphaned({
+    map,
+    onTest: sector=> sector.isWalkable(),
+    onFailure: sector=> sector.setWallSpecial()
   });
 } //end function

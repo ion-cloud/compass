@@ -1,103 +1,111 @@
 import {takeRandom} from '../utilities/takeRandom';
+import {surroundSectors} from '../tools/surroundSectors';
+import {drunkenPath} from '../tools/drunkenPath';
+import {fillRect} from '../tools/fillRect';
+import {getNeighbors} from '../tools/getNeighbors';
+import {Noise} from '../Noise';
+import {clipOrphaned} from '../tools/clipOrphaned';
+import {ExistenceMap} from '../ExistenceMap';
+import {meander} from '../facets/meander';
+import {getTerminalPoints} from '../tools/getTerminalPoints';
 
 export function braidedChannel({map}){
-  const water = [],
-        directions = [
-          'horizontal','vertical','forward','backward'
-        ];
+  const river = new ExistenceMap(),
+        directions = {
+          horizontal: false,
+          vertical: false,
+          forward: false,
+          backward: false,
+        },
+        noise = new Noise(),
+        noise2 = new Noise();
 
-  let x1,y1,x2,y2,direction=takeRandom(directions);
+  directions[takeRandom(Object.keys(directions))]=true;
+  directions.forwardSlant = Math.random()<0.5;
+  directions.backwardSlant = directions.forwardSlant;
+  console.log(directions);
+  for(let rivers=0;rivers<Math.floor(2+Math.random()*2);rivers++){
+    const {x1,x2,y1,y2} =getTerminalPoints({
+      x1:0,y1:0,x2:map.width-1,y2:map.height-2,...directions
+    });
 
-  for(let rivers=0;rivers<Math.floor(5+Math.random()*5);rivers++){
-    if(direction==='horizontal'){
-      x1 = 0;
-      x2 = map.width-1;
-      y1 = Math.floor(Math.random()*map.height/2+map.height/4);
-      y2 = Math.floor(Math.random()*map.height/2+map.height/4);
-    }else if(direction==='vertical'){
-      x1 = Math.floor(Math.random()*map.width/2+map.width/4);
-      x2 = Math.floor(Math.random()*map.width/2+map.width/4);
-      y1 = 0;
-      y2 = map.height-1;
-    }else if(direction==='forward'){
-      if(Math.random()<0.5){ // most eastward
-        x1 = Math.floor(Math.random()*map.width/4);
-        x2 = map.width-1;
-        y1 = map.height-1;
-        y2 = Math.floor(Math.random()*map.height/4);
-      }else{
-        x1 = 0;
-        x2 = Math.floor(Math.random()*map.width/4+map.width/2);
-        y1 = Math.floor(Math.random()*map.height/4+map.height/2);
-        y2 = 0;
-      } //end if
-    }else if(direction==='backward'){
-      if(Math.random()<0.5){ //most eastward
-        x1 = Math.floor(Math.random()*map.width/4);
-        x2 = map.width-1;
-        y1 = 0;
-        y2 = Math.floor(Math.random()*map.height/4+map.height/2);
-      }else{
-        x1 = 0;
-        x2 = Math.floor(Math.random()*map.width/4+map.width/2);
-        y1 = Math.floor(Math.random()*map.height/4);
-        y2 = map.height-1;
-      } //end if
-    } //end if
-    map.drunkenPath({
+    drunkenPath({
+      map,
       x1,y1,x2,y2,wide: true,
-      draw(sector){
+      onDraw(sector){
         sector.setWater();
-        water.push(sector);
+        river.set(sector);
+      },
+      onFailure({x1,y1,x2,y2}){
+        try{
+          const {water} = meander({map,x1,y1,x2,y2});
+
+          river.setMany(water);
+        }catch(err){
+        }
       }
     });
   } //end for
 
-  // now we'll surround water with sand
-  const finished = {};
+  // draw the full rivers
+  const fullRiver = new ExistenceMap();
 
-  water.forEach(({x,y})=>{
-    map.fillRect({
-      x1: x-2, y1: y-2, x2: x+2, y2: y+2,
-      test({x,y}){
-        return finished[`x${x}y${y}`]===undefined;
-      },
-      draw(sector){
-        const {x,y} = sector;
+  surroundSectors({
+    map,sectors:river,
+    onTest({x,y,originX,originY}){
+      return x===originX&&y===originY||Math.random()<0.5;
+    },
+    onDraw(sector){
+      sector.setWater();
+      fullRiver.set(sector);
+    }
+  });
 
-        finished[`x${x}y${y}`] = true;
-        if(sector.isWater()) return;
-        const nearWater = map.getNeighbors({
-          x,y,test:sector=>sector.isWater(),
-          orthogonal: false
-        }).length;
-
-        if(nearWater) sector.setFloorSpecial();
-      }
-    });
+  // now surround the rivers with sand
+  surroundSectors({
+    map,sectors:fullRiver,size:1,
+    onTest({x,y,originX,originY}){
+      return !(x===originX&&y===originY)&&Math.random()<0.25;
+    },
+    onDraw(sector){
+      sector.setFloorSpecial();
+    }
   });
 
   // now we'll generate some noise and populate all non-river data
-  const x=['horizontal','forward'].includes(direction)?6:12,
-        y=['vertical','backward'].includes(direction)?6:12;
-
-  map.fillRect({
+  fillRect({
+    map,
     x1: map.startX, y1: map.startY, x2: map.width, y2: map.height,
-    draw(sector){
-      const n = (1+map.noise.simplex2(sector.x/map.width*x,sector.y/map.height*y))/2;
+    onDraw(sector){
+      if(sector.isWater()) return;
+      const n = (1+noise.simplex2(sector.x/map.width,sector.y/map.height))/2,
+            n2 = (1+noise.simplex2(sector.x/map.width*20,sector.y/map.height*20))/2;
 
-      if(n<0.2&&sector.isEmpty()){
+      if(n<0.1&&sector.isEmpty()){
+        sector.setWallSpecial()
+      }else if(n<0.2&&sector.isEmpty()&&Math.random()<0.8){
         sector.setWallSpecial();
-      }else if(n<0.5&&sector.isEmpty()){
+      }else if(n<0.3&&sector.isEmpty()){
         sector.setWall();
-      }else if(sector.isEmpty()){
+      }else if(n<0.5&&sector.isEmpty()&&Math.random()<0.8){
+        sector.setWall();
+      }else if(!sector.isWater()&&n<0.2){
+        sector.setWallSpecial();
+      }else if(!sector.isWater()&&n<0.5){
+        sector.setWall();
+      }else if(sector.isEmpty()&&n2<0.1){
+        sector.setWallSpecial();
+      }else if(sector.isEmpty()&&n2<0.3){
+        sector.setWall();
+      }else{
         sector.setFloor();
       } //end if
     }
   });
 
-  map.clipOrphaned({
-    test: sector=> sector.isWalkable(),
-    failure: sector=> sector.setWallSpecial()
+  clipOrphaned({
+    map,
+    onTest: sector=> sector.isWalkable(),
+    onFailure: sector=> sector.setWall()
   });
 } //end function

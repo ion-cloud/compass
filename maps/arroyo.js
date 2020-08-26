@@ -1,12 +1,23 @@
+import {ExistenceMap} from '../ExistenceMap';
+import {surroundSectors} from '../tools/surroundSectors';
+import {clipOrphaned} from '../tools/clipOrphaned';
+import {fillRect} from '../tools/fillRect';
+import {Noise} from '../Noise';
+import {shuffle} from '../utilities/shuffle';
+import {drunkenPath} from '../tools/drunkenPath';
+import {bresenhamsLine} from '../tools/bresenhamsLine';
+import {getNeighbors} from '../tools/getNeighbors';
+
 export function arroyo({map}){
   const d = Math.random()<0.5,
         h = d?2:10,
-        v = d?10:2;
+        v = d?10:2,
+        noise = new Noise();
 
-  map.fillRect({
-    x1: map.startX, y1: map.startY, x2: map.width, y2: map.height,
-    draw(sector){
-      const n = (1+map.noise.simplex2(sector.x/map.width*h,sector.y/map.height*v))/2;
+  fillRect({
+    map,x1: map.startX, y1: map.startY, x2: map.width, y2: map.height,
+    onDraw(sector){
+      const n = (1+noise.simplex2(sector.x/map.width*h,sector.y/map.height*v))/2;
 
       if(n<0.4&&Math.random()<0.7){
         sector.setWall()
@@ -20,7 +31,7 @@ export function arroyo({map}){
     }
   });
 
-  const terminalPositions = map.constructor.shuffle([
+  const terminalPositions = shuffle([
     {
       xmin: 0,
       xmax: 0,
@@ -57,30 +68,30 @@ export function arroyo({map}){
   // get the end position, set water
   ({x,y}=getValidTerminalPoint(map,terminalPositions.pop()));
   map.setWater({x,y});
-  const x2 = x, y2 = y, river = {};
+  const x2 = x, y2 = y, river = new ExistenceMap();
 
   // now we'll draw the path between the points
-  map.drunkenPath({
-    x1,y1,
+  drunkenPath({
+    map,x1,y1,
     x2:Math.floor(map.width/2),
     y2:Math.floor(map.height/2),
     wide:true,
-    draw(sector){
+    onDraw(sector){
       sector.setFloorSpecial();
-      river[`x${sector.x}y${sector.y}`] = true;
+      river.set(sector);
 
       // small chance to venture slightly further
       if(Math.random()<0.5){
-        map.getNeighbors({
-          x: sector.x, y: sector.y, size: 2,
-          test(sector){
+        getNeighbors({
+          map,x: sector.x, y: sector.y, size: 2,
+          onTest(sector){
             return sector.isWalkable()&&
               !sector.isWater()&&!sector.isFloorSpecial();
           }
         }).forEach(sector=>{
           if(Math.random()<0.5){
             sector.setFloorSpecial();
-            river[`x${sector.x}y${sector.y}`] = true;
+            river.set(sector);
           } //end if
         });
       } //end if
@@ -92,8 +103,8 @@ export function arroyo({map}){
     onFailureReattempt({x1,y1,x2,y2}){
       let path = [];
 
-      map.bresenhamsLine({
-        x1,y1,x2,y2,
+      bresenhamsLine({
+        map,x1,y1,x2,y2,
         onEach({x,y}){
           path.push({x,y});
         }
@@ -101,27 +112,29 @@ export function arroyo({map}){
       return path;
     }
   });
-  map.drunkenPath({
+  drunkenPath({
+    map,
     x1:Math.floor(map.width/2),
     y1:Math.floor(map.height/2),
     x2,y2,
     wide:true,
-    draw(sector){
+    onDraw(sector){
       sector.setFloorSpecial();
-      river[`x${sector.x}y${sector.y}`] = true;
+      river.set(sector);
 
       // small chance to venture slightly further
       if(Math.random()<0.5){
-        map.getNeighbors({
+        getNeighbors({
+          map,
           x: sector.x, y: sector.y, size: 2,
-          test(sector){
+          onTest(sector){
             return sector.isWalkable()&&
               !sector.isWater()&&!sector.isFloorSpecial();
           }
         }).forEach(sector=>{
           if(Math.random()<0.5){
             sector.setFloorSpecial();
-            river[`x${sector.x}y${sector.y}`] = true;
+            river.set(sector);
           } //end if
         })
       } //end if
@@ -133,8 +146,8 @@ export function arroyo({map}){
     onFailureReattempt({x1,y1,x2,y2}){
       let path = [];
 
-      map.bresenhamsLine({
-        x1,y1,x2,y2,
+      bresenhamsLine({
+        map,x1,y1,x2,y2,
         onEach({x,y}){
           path.push({x,y});
         }
@@ -142,28 +155,14 @@ export function arroyo({map}){
       return path;
     }
   });
-  console.log(river);
-  const finished = {};
 
-  Object
-    .keys(river)
-    .map(key=>{
-      const [,x,y] = key.split(/x|y/g).map(n=>+n);
-
-      map.fillRect({
-        x1: x-3, y1: y-3, x2: x+3, y2: y+3,
-        test({x,y}){
-          return finished[`x${x}y${y}`]===undefined;
-        },
-        draw(sector){
-          const {x,y} = sector;
-
-          finished[`x${x}y${y}`] = true;
-          if(sector.isFloorSpecial()) return;
-          if(Math.random()<0.97) sector.setFloor();
-        }
-      });
-    });
+  surroundSectors({
+    map,sectors:river,size:3,
+    onDraw(sector){
+      if(sector.isFloorSpecial()) return;
+      if(Math.random()<0.97) sector.setFloor();
+    }
+  });
 
   // convert gulch to arroyo
   map.sectors.getAll().forEach(sector=>{
@@ -177,9 +176,10 @@ export function arroyo({map}){
   });
 
   // now remove unwalkable
-  map.clipOrphaned({
-    test: sector=> sector.isWalkable(),
-    failure: sector=> sector.setWallSpecial()
+  clipOrphaned({
+    map,
+    onTest: sector=> sector.isWalkable(),
+    onFailure: sector=> sector.setWallSpecial()
   });
 } //end function
 

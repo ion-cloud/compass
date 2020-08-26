@@ -1,12 +1,18 @@
+import {fillRect} from '../tools/fillRect';
+import {clipOrphaned} from '../tools/clipOrphaned';
+import {Noise} from '../Noise';
+
 export function gully({map}){
   const d = Math.random()<0.5,
         h = d?2:10,
-        v = d?10:2;
+        v = d?10:2,
+        noise = new Noise();
 
-  map.fillRect({
+  fillRect({
+    map,
     x1: map.startX, y1: map.startY, x2: map.width, y2: map.height,
-    draw(sector){
-      const n = (1+map.noise.simplex2(sector.x/map.width*h,sector.y/map.height*v))/2;
+    onDraw(sector){
+      const n = (1+noise.simplex2(sector.x/map.width*h,sector.y/map.height*v))/2;
 
       if(n<0.4){
         sector.setFloorSpecial();
@@ -19,14 +25,16 @@ export function gully({map}){
   });
 
   // remove all but the largest gully
-  map.clipOrphaned({
-    test: sector=> sector.isFloorSpecial(),
-    failure: sector=> Math.random()<0.4?sector.setWall():sector.setFloor()
+  clipOrphaned({
+    map,
+    onTest: sector=> sector.isFloorSpecial(),
+    onFailure: sector=> Math.random()<0.4?sector.setWall():sector.setFloor()
   });
 
   // now remove unwalkable
-  map.clipOrphaned({
-    test: sector=> sector.isWalkable(),
-    failure: sector=> sector.setWallSpecial()
+  clipOrphaned({
+    map,
+    onTest: sector=> sector.isWalkable(),
+    onFailure: sector=> sector.setWallSpecial()
   });
 } //end function

@@ -1,9 +1,15 @@
+import {fillRect} from '../tools/fillRect';
+import {clipOrphaned} from '../tools/clipOrphaned';
+import {Noise} from '../Noise';
+
 export function mesa({map}){
-  map.fillRect({
-    x1: map.startX, y1: map.startY, x2: map.width-1, y2: map.height-1,
-    draw(sector){
-      const n1 = map.noise.perlin2(sector.x/map.width*12,sector.y/map.height*10),
-            n2 = map.noise.perlin2(sector.x/map.width*6,sector.y/map.height*6),
+  const noise = new Noise();
+
+  fillRect({
+    map, x1: map.startX, y1: map.startY, x2: map.width-1, y2: map.height-1,
+    onDraw(sector){
+      const n1 = noise.perlin2(sector.x/map.width*12,sector.y/map.height*10),
+            n2 = noise.perlin2(sector.x/map.width*6,sector.y/map.height*6),
             n = (n1+n2)/2;
 
       if(n<0.05&&Math.random()<0.95){
@@ -19,8 +25,9 @@ export function mesa({map}){
   });
 
   // clip all non-walkable parts of the map away
-  map.clipOrphaned({
-    test: sector=> sector.isWalkable()||sector.isEmpty(),
-    failure: sector=> sector.setWallSpecial()
+  clipOrphaned({
+    map,
+    onTest: sector=> sector.isWalkable()||sector.isEmpty(),
+    onFailure: sector=> sector.setWallSpecial()
   });
 } //end function

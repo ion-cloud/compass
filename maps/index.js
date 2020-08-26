@@ -46,6 +46,28 @@ export const maps = [
   {name: 'cliffs', generator: cliffs},
   {name: 'clustered rooms', generator: clusteredRooms},
   {
+    name: 'clustered rooms - wild',
+    generator({map,x1,y1,x2,y2}){
+      clusteredRooms({
+        map,x1,y1,x2,y2,
+        emptyWeight:1,floorWeight:2,otherWeight:5,
+        hallwayLengthMean:3,hallwayLengthSigma:0.3,
+        minRoomSize:2,maxRoomSize:2
+      })
+    }
+  },
+  {
+    name: 'clustered rooms - winding',
+    generator({map,x1,y1,x2,y2}){
+      clusteredRooms({
+        map,x1,y1,x2,y2,
+        emptyWeight:5,floorWeight:4,otherWeight:20,
+        hallwayLengthMean:6,hallwayLengthSigma:0.3,
+        minRoomSize:3,maxRoomSize:3
+      })
+    }
+  },
+  {
     name: 'clustered rooms - large',
     generator({map,x1,y1,x2,y2}){
       clusteredRooms({

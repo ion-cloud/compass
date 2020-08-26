@@ -1,8 +1,15 @@
+import {fillRect} from '../tools/fillRect';
+import {Noise} from '../Noise';
+import {clipOrphaned} from '../tools/clipOrphaned';
+
 export function couloir({map}){
-  map.fillRect({
+  const noise = new Noise();
+
+  fillRect({
+    map,
     x1: map.startX, y1: map.startY, x2: map.width, y2: map.height,
-    draw(sector){
-      const n = map.noise.simplex2(sector.x/map.width*5,sector.y/map.height*5);
+    onDraw(sector){
+      const n = noise.simplex2(sector.x/map.width*5,sector.y/map.height*5);
 
       if(n<0.05&&Math.random()<0.1){
         sector.setFloorSpecial();
@@ -19,8 +26,9 @@ export function couloir({map}){
   });
 
   // clip all non-walkable parts of the map away
-  map.clipOrphaned({
-    test: sector=> sector.isWalkable()||sector.isEmpty(),
-    failure: sector=> sector.setWall()
+  clipOrphaned({
+    map,
+    onTest: sector=> sector.isWalkable()||sector.isEmpty(),
+    onFailure: sector=> sector.setWall()
   });
 } //end function
