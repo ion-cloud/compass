@@ -11,7 +11,8 @@ export class Map{
     this.startX = startX;
     this.startY = startY;
     this.sectors = sectors;
-    this.rooms = [];
+    this.currentRoom = 0;
+    this.rooms = {};
   }
   clone(){
     return new Map({
@@ -23,7 +24,8 @@ export class Map{
   }
   reset(){
     this.sectors.reset();
-    this.rooms.length = 0;
+    this.currentRoom = 0;
+    this.rooms = {};
   }
 
   // translate allows a {x,y} point to be translated to a touching sector
@@ -187,13 +189,16 @@ export class Map{
     if(direction) ({x,y} = this.constructor.translate({x,y,direction}));
     return this.getSector({x,y}).isWalkable();
   }
+  nextRoom(){
+    this.currentRoom++;
+  }
   isRoom({x=0,y=0}={},direction){
     if(direction) ({x,y} = this.constructor.translate({x,y,direction}));
     return this.getSector({x,y}).id>0;
   }
-  setRoom({x=0,y=0,id=0}={},direction){
+  setRoom({x=0,y=0,roomNumber=this.currentRoom}={},direction){
     if(direction) ({x,y} = this.constructor.translate({x,y,direction}));
-    this.getSector({x,y}).roomNumber = id;
+    this.getSector({x,y}).roomNumber = roomNumber;
   }
   getRoom({x=0,y=0}={},direction){
     if(direction) ({x,y} = this.constructor.translate({x,y,direction}));

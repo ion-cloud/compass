@@ -51,6 +51,7 @@ export const waterPoolSquare = {
         }else{
           sector.setWater();
         } //end if
+        map.setRoom(sector);
       }
     });
     return {success:true,exits: roomGetUniqueExits({map,roomDirection,exits})};
@@ -126,6 +127,7 @@ export const waterPoolCircle = {
         }else{
           sector.setWater();
         } //end if
+        map.setRoom(sector);
       }
     });
     failed.forEach(sector=>{

@@ -13,51 +13,42 @@ export function clipOrphaned({
   const locStats = {val: 0,cur: 0,num: 0,max: 0},
         unmapped = [];
 
-  // we have to start by removing roomNumbers if they exist because
+  // we have to start by removing _cs if they exist because
   // we run this function more than once
   map.sectors.getAll().forEach(sector=>{
-    sector.roomNumber = 0;
+    sector._c = 0;
   });
   map.sectors.getAll().forEach(sector=>{
-    const sectorX = sector.x,
-          sectorY = sector.y;
-
-    if(onTest(sector)&&!sector.roomNumber){
+    if(onTest(sector)&&!sector._c){
       locStats.cur++; locStats.val = 1; //init new room
-      let newLoc = {x:sectorX,y:sectorY,id: locStats.cur},
-          x, y;
+      let {x,y} = sector,
+          newLoc = {x,y,id: locStats.cur},
+          s;
 
       do{
         ({x,y}=newLoc);
-        if(
-          map.isInbounds({x: x-1,y})&&!map.getRoom({x: x-1,y})&&
-          onTest(map.getSector({x: x-1,y}))
-        ){
-          unmapped.push({x: x-1, y});
-          map.setRoom({x: x-1,y,id: -1});
+        s = map.getSector({x,y},'west');
+        if(map.isInbounds(s)&&!s._c&&onTest(s)){
+          unmapped.push(s);
+          s._c=-1;
         } //end if
-        if(
-          map.isInbounds({x,y: y-1})&&!map.getRoom({x,y: y-1})&&
-          onTest(map.getSector({x,y: y-1}))
-        ){
-          unmapped.push({x,y: y-1});
-          map.setRoom({x,y: y-1,id: -1});
+        s = map.getSector({x,y},'north');
+        if(map.isInbounds(s)&&!s._c&&onTest(s)){
+          unmapped.push(s);
+          s._c=-1;
         } //end if
-        if(
-          map.isInbounds({x: x+1,y})&&!map.getRoom({x: x+1,y})&&
-          onTest(map.getSector({x: x+1,y}))
-        ){
-          unmapped.push({x: x+1, y});
-          map.setRoom({x: x+1,y,id: -1});
+        s = map.getSector({x,y},'east');
+        if(map.isInbounds(s)&&!s._c&&onTest(s)){
+          unmapped.push(s);
+          s._c=-1;
         } //end if
-        if(
-          map.isInbounds({x,y: y+1})&&!map.getRoom({x,y: y+1})&&
-          onTest(map.getSector({x,y: y+1}))
-        ){
-          unmapped.push({x,y: y+1});
-          map.setRoom({x,y: y+1,id: -1});
+        s = map.getSector({x,y},'south');
+        if(map.isInbounds(s)&&!s._c&&onTest(s)){
+          unmapped.push(s);
+          s._c=-1;
         } //end if
-        map.setRoom({x,y,id: locStats.cur});
+        s = map.getSector({x,y});
+        s._c=locStats.cur;
         locStats.val++;
         if(locStats.val>locStats.max){
           locStats.max=locStats.val;
@@ -68,9 +59,9 @@ export function clipOrphaned({
     } //end if
   });
   map.sectors.getAll().forEach(sector=>{
-    if(onTest(sector)&&sector.roomNumber!==locStats.num){
+    if(onTest(sector)&&sector._c!==locStats.num){
       onFailure(sector);
-    }else if(onTest(sector)&&sector.roomNumber===locStats.num){
+    }else if(onTest(sector)&&sector._c===locStats.num){
       onSuccess(sector);
     }else{
       onHardFailure(sector);

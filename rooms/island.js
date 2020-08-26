@@ -51,6 +51,7 @@ export const islandSquare = {
         }else{
           sector.setFloor();
         } //end if
+        map.setRoom(sector);
       }
     });
     return {success:true,exits: roomGetUniqueExits({map,exits,roomDirection})};
@@ -126,6 +127,7 @@ export const islandCircle = {
         }else{
           sector.setFloor();
         } //end if
+        map.setRoom(sector);
       }
     });
     failed.forEach(sector=>{

@@ -66,6 +66,7 @@ export const pillarSquare = {
             )
           ) return sector.setWall();
         } //end if
+        map.setRoom(sector);
         sector.setFloor();
       }
     });
@@ -158,6 +159,7 @@ export const pillarCircle = {
             )
           ) return sector.setWall();
         } //end if
+        map.setRoom(sector);
         sector.setFloor();
       }
     });

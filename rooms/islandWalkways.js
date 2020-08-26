@@ -47,6 +47,7 @@ export const islandWalkwaysSquare = {
         }else{
           sector.setWater();
         } //end if
+        map.setRoom(sector);
       }
     });
     return {success:true,exits:roomGetUniqueExits({map,roomDirection,exits})};
@@ -117,6 +118,7 @@ export const islandWalkwaysCircle = {
         }else{
           sector.setWater();
         } //end if
+        map.setRoom(sector);
       }
     });
     failed.forEach(sector=>{

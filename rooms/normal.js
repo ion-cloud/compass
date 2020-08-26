@@ -39,6 +39,7 @@ export const normalSquare = {
         }else{
           sector.setFloor();
         } //end if
+        map.setRoom(sector);
       }
     });
     return {success:true,exits:roomGetUniqueExits({map,exits,roomDirection})};
@@ -102,6 +103,7 @@ export const normalCircle = {
         }else{
           sector.setFloor();
         } //end if
+        map.setRoom(sector);
       }
     });
     failed.forEach(sector=>{

@@ -19,7 +19,7 @@ const charMap = {
 
 export const prefab = {
   name: 'prefab',
-  fn({map,room,prefab,roomDirection,x,y,x1,y1,x2,y2}){
+  fn({map,room,prefab,direction,x,y,x1,y1,x2,y2}){
     const doors = [],
           {width,height} = prefab.details;
 
@@ -46,13 +46,14 @@ export const prefab = {
         if(cx>prefab.data[cy].length-1) break;
         const char = prefab.data[cy][cx];
 
-        let {x,y} = roomTranslateCoordinates({x1,y1,cx,cy,width,height,roomDirection});
+        let {x,y} = roomTranslateCoordinates({x1,y1,cx,cy,width,height,direction});
 
         if(char==='+'){
           doors.push({x,y});
         }else if(charMap.hasOwnProperty(char)){
           const randomNumber = Math.random();
 
+          if(!['setWall','setWallSpecial','setDoor','setRemoved','setWindow'].includes(charMap[char])) map.setRoom({x,y});
           if(
             charMap[char].includes('setFloor')&&
             room.waterChance&&Math.random()<room.waterChance
