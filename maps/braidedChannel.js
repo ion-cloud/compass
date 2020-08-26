@@ -23,7 +23,6 @@ export function braidedChannel({map}){
   directions[takeRandom(Object.keys(directions))]=true;
   directions.forwardSlant = Math.random()<0.5;
   directions.backwardSlant = directions.forwardSlant;
-  console.log(directions);
   for(let rivers=0;rivers<Math.floor(2+Math.random()*2);rivers++){
     const {x1,x2,y1,y2} =getTerminalPoints({
       x1:0,y1:0,x2:map.width-1,y2:map.height-2,...directions
@@ -65,7 +64,7 @@ export function braidedChannel({map}){
   surroundSectors({
     map,sectors:fullRiver,size:1,
     onTest({x,y,originX,originY}){
-      return !(x===originX&&y===originY)&&Math.random()<0.25;
+      return !fullRiver.get({x,y})&&Math.random()<0.25;
     },
     onDraw(sector){
       sector.setFloorSpecial();

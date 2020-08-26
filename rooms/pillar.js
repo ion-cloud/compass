@@ -165,7 +165,7 @@ export const pillarCircle = {
       if(
         sector.isEmpty()&&
         getNeighbors({
-          map,sector,test:sector=>sector.isFloor()
+          map,sector,onTest:sector=>sector.isFloor()
         }).length
       ) sector.setWall();
     });

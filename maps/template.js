@@ -6,6 +6,7 @@ import {takeRandom} from '../utilities/takeRandom';
 import {GenericState} from '../utilities/GenericState';
 import {shuffle} from '../utilities/shuffle';
 import {clipOrphaned} from '../tools/clipOrphaned';
+import {getNeighbors} from '../tools/getNeighbors';
 
 // eslint-disable-next-line complexity
 export function template({map,name,options=null}={}){
@@ -83,7 +84,7 @@ export function template({map,name,options=null}={}){
 
     // short-circuit
     if(!success) return false;
-    if(room.name!=='prefab origin'){
+    if(!prefab){
       map.setDoor({x,y});
       doors.push({x,y});
     } //end if

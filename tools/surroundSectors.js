@@ -1,8 +1,6 @@
 import {ExistenceMap} from '../ExistenceMap';
 import {fillRect} from '../tools/fillRect';
 
-const exists = new ExistenceMap();
-
 function defaultOnDraw(sector){
   sector.setFloor();
 } //end defaultOnDraw();
@@ -13,6 +11,8 @@ export function surroundSectors({
   onDraw=sector=>sector.setFloor(),
   onTest=()=>true
 }={}){
+  const exists = new ExistenceMap();
+
   sectors.getAll().forEach(({x,y})=>{
     const [originX,originY] = [x,y];
 

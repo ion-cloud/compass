@@ -102,7 +102,7 @@ export const islandWalkwaysCircle = {
         failed.push(sector);
         return false;
       },
-      draw:sector=>{
+      onDraw:sector=>{
         const {x,y} = sector,
               midX=(x2-x1)/2, midY= (y2-y1)/2,
               cx = Math.abs(x-x1-midX),
@@ -123,7 +123,7 @@ export const islandWalkwaysCircle = {
       if(
         sector.isEmpty()&&
         getNeighbors({
-          map,sector,test:sector=>sector.isWalkable()
+          map,sector,onTest:sector=>sector.isWalkable()
         }).length
       ) sector.setWall();
     });

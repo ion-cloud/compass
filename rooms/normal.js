@@ -108,7 +108,7 @@ export const normalCircle = {
       if(
         sector.isEmpty()&&
         getNeighbors({
-          map,sector,test:sector=>sector.isWalkable()
+          map,sector,onTest:sector=>sector.isWalkable()
         }).length
       ) sector.setWall();
     });
