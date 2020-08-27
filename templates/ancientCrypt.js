@@ -4,6 +4,15 @@ export const ancientCrypt = {
     doors:{
       ignore: 0.6
     },
+    lake: {
+      ignoreSand: true,
+      minWidth: 8,
+      maxWidth: 16,
+      minHeight: 8,
+      maxHeight: 16,
+      minAmount: 8,
+      maxAmount: 16
+    },
     rooms: [
       {
         name: 'prefab',

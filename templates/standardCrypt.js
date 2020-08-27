@@ -1,6 +1,13 @@
 export const standardCrypt = {
   name: 'standard crypt',
   options: {
+    lake: {
+      minWidth: 8,
+      maxWidth: 16,
+      minHeight: 8,
+      maxHeight: 16,
+      amount: 4
+    },
     rooms: [
       {
         name: 'prefab',

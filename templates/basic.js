@@ -2,6 +2,15 @@ export const basic = {
   name: 'basic',
   options: {
     prefabOrigin: true,
+    lake: {
+      types: ['setFloor'],
+      minWidth: 8,
+      maxWidth: 16,
+      minHeight: 8,
+      maxHeight: 16,
+      ignoreSand: true,
+      amount: 8
+    },
     rooms: [
       {
         name: 'marshy prefab',

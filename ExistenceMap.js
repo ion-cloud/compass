@@ -6,12 +6,17 @@ export class ExistenceMap{
     const key = `x${x}y${y}`;
 
     if(!this.list.hasOwnProperty(key)) return false;
-    return true;
+    return this.list[key];
   }
   set({x=0,y=0}={}){
     const key = `x${x}y${y}`;
 
     this.list[key] = true;
+  }
+  unset({x=0,y=0}={}){
+    const key = `x${x}y${y}`;
+
+    this.list[key] = false;
   }
   setMany(existenceMap){
     if(!(existenceMap instanceof ExistenceMap)){
@@ -21,13 +26,19 @@ export class ExistenceMap{
       this.list[key] = true;
     });
   }
-  getAll(){
-    return Object.keys(this.list)
-      .map(key=>{
-        const [,xs,ys] = key.split(/x|y/g);
 
-        return {x:+xs,y:+ys};
-      });
+  // only return those that are truthy
+  getAll(){
+    const list =  Object.keys(this.list)
+      .reduce((array,key)=>{
+        if(this.list[key]){
+          const [,xs,ys] = key.split(/x|y/g);
+
+          array.push({x:+xs,y:+ys});
+        } //end if
+        return array;
+      },[]);
+    return list;
   }
   reset(){
     this.list = {};

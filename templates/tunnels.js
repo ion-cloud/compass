@@ -7,6 +7,14 @@ export const tunnels = {
         chance: 1
       }
     },
+    lake: {
+      chance: 0.5,
+      minWidth: 16,
+      maxWidth: 32,
+      minHeight: 16,
+      maxHeight: 32,
+      amount: 4
+    },
     rooms: [
       {
         name: 'normal square',

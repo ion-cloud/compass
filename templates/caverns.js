@@ -9,6 +9,14 @@ export const caverns = {
         waterChance: 0.2
       }
     },
+    lake: {
+      minWidth: 16,
+      maxWidth: 32,
+      minHeight: 16,
+      maxHeight: 32,
+      ignoreSand: true,
+      amount: 4
+    },
     rooms: [
       {
         name: 'normal circle',

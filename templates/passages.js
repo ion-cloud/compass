@@ -8,6 +8,15 @@ export const passages = {
         waterChance: 0.5
       }
     },
+    lake: {
+      ignoreSand: true,
+      minWidth: 16,
+      maxWidth: 32,
+      minHeight: 16,
+      maxHeight: 32,
+      minAmount: 1,
+      maxAmount: 2
+    },
     rooms: [
       {
         name: 'normal circle',

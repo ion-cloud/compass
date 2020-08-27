@@ -10,6 +10,8 @@ import {getNeighbors} from '../tools/getNeighbors';
 import {getNeighborsHorizontal} from '../tools/getNeighborsHorizontal';
 import {getNeighborsVertical} from '../tools/getNeighborsVertical';
 import {ExistenceMap} from '../ExistenceMap';
+import {isRect} from '../tools/isRect';
+import {lake} from '../facets/lake';
 
 // eslint-disable-next-line complexity
 export function template({map,name,options=null}={}){
@@ -54,6 +56,64 @@ export function template({map,name,options=null}={}){
     onTest: sector=> sector.isWalkable()||sector.isDoor(),
     onFailure: sector=> sector.setWallSpecial()
   });
+
+  if(options.lake&&!options.lake.chance||options.lake&&Math.random()<options.lake.chance){
+    const maxWidth = options.lake.maxWidth||16,
+          maxHeight = options.lake.maxHeight||16,
+          minWidth = options.lake.minWidth||8,
+          minHeight = options.lake.minHeight||8,
+          minAmount = options.lake.minAmount||options.lake.amount||1,
+          maxAmount = options.lake.maxAmount||options.lake.amount||1,
+          amount = Math.round(Math.random()*(maxAmount-minAmount)+minAmount),
+          x1 = map.startX, y1 = map.startY, x2 = map.width-1, y2 = map.height-1,
+          xa = x2-x1-maxWidth, ya = y2-y1-maxHeight;
+
+    let current = 0;
+
+    do{
+      const rx = x1+Math.floor(Math.random()*xa),
+            ry = y1+Math.floor(Math.random()*xa),
+            width = Math.floor(Math.random()*(maxWidth-minWidth)+minWidth),
+            height = Math.floor(Math.random()*(maxHeight-minHeight)+minHeight),
+            sand = new ExistenceMap(),
+            water = new ExistenceMap(),
+            waterSpecial = new ExistenceMap(),
+            wall = new ExistenceMap();
+
+      lake({
+        map,x1:rx,y1:ry,x2:rx+width,y2:ry+height,
+        sand: !options.lake.ignoreSand,
+        onTestSand:sector=>!sector.isWall()&&!sector.isWater()&&Math.random()<0.4,
+        onDrawSand:sector=> sand.set(sector),
+        onTestWall:sector=>sector.isEmpty(),
+        onDrawWater:sector=> water.set(sector),
+        onDrawWaterSpecial:sector=> waterSpecial.set(sector),
+        onDrawWall:sector=> wall.set(sector)
+      });
+      if(
+        [...sand.getAll(),...water.getAll()]
+          .find(sector=> map.isWalkable(sector))
+      ){
+        sand.getAll().forEach(({x,y})=>map.setFloorSpecial({x,y}));
+        water.getAll().forEach(({x,y})=>{
+          if(options.lake.types){
+            map[takeRandom(options.lake.types)]({x,y});
+          }else{
+            map.setWater({x,y});
+          } //end if
+        });
+        waterSpecial.getAll().forEach(({x,y})=>{
+          if(options.lake.types){
+            map[takeRandom(options.lake.types)]({x,y});
+          }else{
+            map.setWaterSpecial({x,y});
+          } //en dif
+        });
+        wall.getAll().forEach(({x,y})=>map.setWall({x,y}));
+        current++;
+      } //end if
+    }while(current<amount)
+  } //end if
 
   // now add extra connections and then cleanup doors if they're too close
   if(!options.doors||options.doors&&!options.doors.expand){
@@ -115,7 +175,7 @@ export function template({map,name,options=null}={}){
           map, x, y, onTest:sector=> sector.isWall()
         });
 
-      if(wallsVertical.length<2&&wallsHorizontal<2) sector.setFloor();
+      if(wallsVertical.length<2&&wallsHorizontal.length<2) sector.setFloor();
     });
   } //end if
 

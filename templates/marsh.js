@@ -9,6 +9,14 @@ export const marsh = {
         waterChance: 0.5
       }
     },
+    lake: {
+      ignoreSand: true,
+      minWidth: 16,
+      maxWidth: 32,
+      minHeight: 16,
+      maxHeight: 32,
+      amount: 4
+    },
     rooms: [
       {
         name: 'normal',

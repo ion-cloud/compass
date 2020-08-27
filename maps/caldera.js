@@ -1,38 +1,17 @@
 import {shuffle} from '../utilities/shuffle';
 import {clipOrphaned} from '../tools/clipOrphaned';
 import {fillRect} from '../tools/fillRect';
+import {getNeighbors} from '../tools/getNeighbors';
+import {isRect} from '../tools/isRect';
+import {lake} from '../facets/lake';
+import {ExistenceMap} from '../ExistenceMap';
 
 export function caldera({map}){
-  const calderaSize = map.width*map.height/10,
-        sparks = [],
-        filled = Math.random()<0.5;
-
-  // first lets create the caldera itself
-  let x = Math.floor(map.width/3+Math.random()*map.width/3),
-      y = Math.floor(map.height/3+Math.random()*map.height/3),
-      size = 0;
-
-  do{
-    size++;
-    if(filled){
-      map.setWater({x,y});
-    }else{
-      map.setFloorSpecial({x,y});
-    } //end if
-    if(map.isInbounds({x: x-1,y})&&map.isEmpty({x: x-1,y})){
-      sparks.push({x: x-1,y});
-    } //end if
-    if(map.isInbounds({x: x+1,y})&&map.isEmpty({x: x+1,y})){
-      sparks.push({x: x+1,y});
-    } //end if
-    if(map.isInbounds({x, y: y-1})&&map.isEmpty({x,y: y-1})){
-      sparks.push({x,y: y-1});
-    } //end if
-    if(map.isInbounds({x, y: y+1})&&map.isEmpty({x,y: y+1})){
-      sparks.push({x,y: y+1});
-    } //end if
-    if(sparks.length) ({x,y}=shuffle(sparks).pop());
-  }while(size<calderaSize&&sparks.length)
+  const width = (map.width-map.startX)/2,
+        height = (map.height-map.startY)/2,
+        filled = Math.random()<0.5,
+        x = Math.floor(Math.random()*(map.width-width)),
+        y = Math.floor(Math.random()*(map.height-height));
 
   // now we'll create a map boundary that's fuzzy to contain
   // the player
@@ -52,20 +31,16 @@ export function caldera({map}){
       // d turns it into a circle
       if(r1<d-0.5||r2<0.05){
         sector.setWall();
-      }else if(
-        filled&&
-        map.getNeighbors({
-          x: sector.x,y: sector.y, size: 2,
-          test(sector){
-            return sector.isWater()&&Math.random()<0.5;
-          }
-        }).length
-      ){
-        sector.setFloorSpecial();
       }else{
         sector.setFloor();
       } //end if
     }
+  });
+
+  lake({
+    map, x1: x, y1: y, x2: x+width, y2: y+height,
+    wall:false, sand: true,
+    onTestSand:s=> s.isFloor()&&Math.random()<0.5,
   });
 
   // now that we've represented the map fully, lets find the largest walkable
