@@ -98,11 +98,24 @@ export function template({map,name,options=null}={}){
       const sector = map.getSector({x,y});
 
       if(!sector.isDoor()) return;
-      const neighbors = getNeighbors({
+      const doorsNearby = getNeighbors({
         map, x, y, size: 2, self: true, onTest:sector=> sector.isDoor()
       });
 
-      if(neighbors.length>1) neighbors.forEach(sector=> sector.setFloor());
+      if(doorsNearby.length>1) return doorsNearby.forEach(sector=> sector.setFloor());
+      const walkableNearby = getNeighbors({
+        map, x, y, onTest:sector=> sector.isWalkable()
+      });
+
+      if(walkableNearby.length<=1) return sector.setWall();
+      const wallsVertical = getNeighborsVertical({
+          map, x, y, onTest:sector=> sector.isWall()
+        }),
+        wallsHorizontal = getNeighborsHorizontal({
+          map, x, y, onTest:sector=> sector.isWall()
+        });
+
+      if(wallsVertical.length<2&&wallsHorizontal<2) sector.setFloor();
     });
   } //end if
 
