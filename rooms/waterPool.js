@@ -73,7 +73,7 @@ export const waterPoolCircle = {
 
     if(!isRect({
       map,x1,y1,x2,y2,
-      onTest:sector=>{
+      hasAll:sector=>{
         const {x,y} = sector;
 
         return sector.isEmpty()||(sector.isWall()||sector.isDoor())&&(

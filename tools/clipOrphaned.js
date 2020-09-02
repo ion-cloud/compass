@@ -21,7 +21,6 @@ export function clipOrphaned({
 
   // we have to start by removing _cs if they exist because
   // we run this function more than once
-  iterateRect({x1, y1, x2, y2, onDraw:({x,y})=> state.set({x,y,value:0})});
   iterateRect({
     x1, y1, x2, y2,
     onEach(sector){

@@ -38,8 +38,7 @@ export class BasicWebGLDisplay{
 
       if(!todo[category]) todo[category] = {color: colorProxy[category],rects:[]};
       todo[category].rects.push({x:x/this.map.width,y:y/this.map.height,w,h});
-    })
-    console.log(this.map);
+    });
 
     // for each sector type, draw it with a single vbo through webgl
     Object

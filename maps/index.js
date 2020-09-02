@@ -10,6 +10,7 @@ import {cliffs} from './cliffs';
 import {clusteredRooms} from './clusteredRooms';
 import {couloir} from './couloir';
 import {cuesta} from './cuesta';
+import {diffuseCorridors} from './diffuseCorridors';
 import {draw} from './draw';
 import {esker} from './esker';
 import {exhumedRiverChannel} from './exhumedRiverChannel';
@@ -98,6 +99,55 @@ export const maps = [
   },
   {name: 'couloir', generator: couloir},
   {name: 'cuesta', generator: cuesta},
+  {name: 'diffuse corridors', generator: diffuseCorridors},
+  {
+    name: 'diffuse corridors - connected',
+    generator({map,x1,y1,x2,y2}){
+      diffuseCorridors({
+        map,x1,y1,x2,y2,
+        minSize:2,maxSize:5,connected:1
+      });
+    }
+  },
+  {
+    name: 'diffuse corridors - separated',
+    generator({map,x1,y1,x2,y2}){
+      diffuseCorridors({
+        map,x1,y1,x2,y2,
+        minSize:2,maxSize:5,connected:0
+      });
+    }
+  },
+  {
+    name: 'diffuse corridors - deadends',
+    generator({map,x1,y1,x2,y2}){
+      diffuseCorridors({
+        map,x1,y1,x2,y2,
+        minSize:5,maxSize:5,connected:0,
+        deadends:true
+      });
+    }
+  },
+  {
+    name: 'diffuse corridors - catacombs',
+    generator({map,x1,y1,x2,y2}){
+      diffuseCorridors({
+        map,x1,y1,x2,y2,
+        minSize:3,maxSize:3,connected:0,
+        deadends:true
+      });
+    }
+  },
+  {
+    name: 'diffuse corridors - external',
+    generator({map,x1,y1,x2,y2}){
+      diffuseCorridors({
+        map,x1,y1,x2,y2,
+        minSize:3,maxSize:3,connected:0,
+        deadends:false
+      });
+    }
+  },
   {name: 'draw', generator: draw},
   {name: 'esker', generator: esker},
   {name: 'exhumed river channel', generator: exhumedRiverChannel},

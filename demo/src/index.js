@@ -6,7 +6,7 @@ const easel = new EaselWebGL(),
       map = new Map({width:100,height:100}),
       display = new BasicWebGLDisplay({easel,map}),
       select = document.createElement('select'),
-      startingMapName = 'template - ancient crypt';
+      startingMapName = 'diffuse corridors - external';
 
 easel.onDraw = function(){ display.draw(); };
 maps.forEach(map=>{
